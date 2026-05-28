@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Monte Carlo &amp; TD Learning — REINFORCE</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">04 · Monte Carlo &amp; Temporal Difference</h1>
+  <p class="muted">No model? Learn from interaction. <strong>Monte Carlo</strong> waits for a full episode, then updates with the actual return G. <strong>TD</strong> updates after one step using a bootstrapped guess of future return. SARSA is on-policy, Q-Learning is off-policy.</p>
+
+  <div class="math">
+    Monte Carlo:&nbsp; Q(s,a) ← Q(s,a) + α [ G − Q(s,a) ]<br/>
+    SARSA (on-policy):&nbsp; Q(s,a) ← Q(s,a) + α [ r + γ Q(s′,a′) − Q(s,a) ]<br/>
+    Q-Learning (off-policy):&nbsp; Q(s,a) ← Q(s,a) + α [ r + γ max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]<br/>
+    Expected SARSA:&nbsp; Q(s,a) ← Q(s,a) + α [ r + γ Σ<sub>a′</sub> π(a′|s′) Q(s′,a′) − Q(s,a) ]
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — cliff walking</div>
+    <p class="muted">Classic environment: bottom row is a cliff (-100). Walking near it is optimal but risky. Q-Learning learns the optimal (cliff-edge) path; SARSA learns a safer detour. Watch the difference.</p>
+
+    <div class="controls">
+      <label>Algorithm
+        <select id="alg">
+          <option value="qlearn" selected>Q-Learning</option>
+          <option value="sarsa">SARSA</option>
+          <option value="esarsa">Expected SARSA</option>
+          <option value="mc">Monte Carlo (every-visit)</option>
+        </select>
+      </label>
+      <label>Environment
+        <select id="env">
+          <option value="cliff" selected>Cliff Walk</option>
+          <option value="default">Default Grid</option>
+          <option value="frozen">Frozen Lake</option>
+        </select>
+      </label>
+      <label>α <span class="val" id="alpha-v">0.10</span>
+        <input type="range" id="alpha" min="0.01" max="0.9" step="0.01" value="0.10" />
+      </label>
+      <label>ε <span class="val" id="eps-v">0.10</span>
+        <input type="range" id="eps" min="0" max="0.5" step="0.01" value="0.10" />
+      </label>
+      <label>γ <span class="val" id="gamma-v">1.00</span>
+        <input type="range" id="gamma" min="0.5" max="1" step="0.01" value="1.00" />
+      </label>
+      <label>Episodes / frame <span class="val" id="epf-v">1</span>
+        <input type="range" id="epf" min="1" max="50" step="1" value="1" />
+      </label>
+      <button class="btn" id="run">▶ Train</button>
+      <button class="btn ghost" id="step">+1 Episode</button>
+      <button class="btn ghost" id="reset">Reset Q</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="lbl">Episode</span><span class="v" id="s-ep">0</span></div>
+      <div class="stat"><span class="lbl">Last return</span><span class="v" id="s-g">—</span></div>
+      <div class="stat"><span class="lbl">Avg return (100)</span><span class="v" id="s-avg">—</span></div>
+      <div class="stat"><span class="lbl">Steps</span><span class="v" id="s-steps">—</span></div>
+    </div>
+
+    <div class="split" style="margin-top:1rem">
+      <div>
+        <h3 style="margin-top:0">Q values (max over a) + greedy policy</h3>
+        <div class="canvas-wrap"><canvas id="qgrid" width="640" height="260"></canvas></div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Last episode trajectory</h3>
+        <div class="canvas-wrap"><canvas id="traj" width="640" height="260"></canvas></div>
+      </div>
+    </div>
+
+    <h3>Return per episode</h3>
+    <div class="canvas-wrap"><canvas id="rchart" width="1000" height="180"></canvas></div>
+  </div>
+
+  <h2>MC vs TD: the trade-off</h2>
+  <table class="kv">
+    <tr><td>Monte Carlo</td><td>Unbiased estimate of return. High variance. Needs complete episodes. Slow to credit-assign.</td></tr>
+    <tr><td>TD(0)</td><td>Biased (bootstraps off learned values). Low variance. Updates online, every step. Faster in practice.</td></tr>
+    <tr><td>SARSA vs Q-Learning</td><td>SARSA evaluates the policy it's actually executing (ε-greedy → cares about exploration risk → safer path). Q-Learning evaluates the greedy policy regardless of behavior (→ aggressive optimal path).</td></tr>
+    <tr><td>n-step / TD(λ)</td><td>Spectrum between TD(0) and MC. Trade bias for variance.</td></tr>
+  </table>
+
+  <div class="note"><strong>The cliff teaches the SARSA/Q-Learning difference.</strong> With ε=0.1, occasionally the agent picks a random action. Near the cliff that random "down" is fatal. Q-Learning ignores that risk in its target (it uses max), SARSA includes it (it uses the actual next action). Set ε high and the difference becomes dramatic.</div>
+
+  <p style="margin-top:2rem"><a href="dp.html">← Dynamic Programming</a> &nbsp;·&nbsp; <a href="function-approx.html">Next: Function Approximation →</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/gridworld.js"></script>
+<script src="js/td.js"></script>
+</body>
+</html>

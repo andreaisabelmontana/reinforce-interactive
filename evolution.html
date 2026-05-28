@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Evolutionary RL — REINFORCE</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">09 · Evolutionary Methods</h1>
+  <p class="muted">RL without gradients. Treat policy parameters as a genome. Evaluate fitness by running episodes. Select the best. Recombine and mutate. Repeat. Surprisingly competitive — OpenAI showed ES rivals TRPO on Atari (2017).</p>
+
+  <div class="math">
+    pop<sub>g+1</sub> = mutate( crossover( select( pop<sub>g</sub>, fit ) ) )<br/>
+    select:&nbsp; tournament / elitism &nbsp;·&nbsp; mutate:&nbsp; w ← w + σ · 𝒩(0, I)
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — evolve a CartPole controller</div>
+    <p class="muted">Each genome is a linear policy: <code>π(s) = sign(w · s)</code>. Four-dimensional state (cart pos, cart vel, pole angle, pole vel), two actions (push left/right). Fitness = steps balanced (max 500).</p>
+
+    <div class="controls">
+      <label>Pop size <span class="val" id="pop-v">40</span>
+        <input type="range" id="pop" min="10" max="200" step="5" value="40" />
+      </label>
+      <label>Elite frac <span class="val" id="elite-v">0.20</span>
+        <input type="range" id="elite" min="0.05" max="0.5" step="0.01" value="0.20" />
+      </label>
+      <label>Mutation σ <span class="val" id="sigma-v">0.30</span>
+        <input type="range" id="sigma" min="0.01" max="2" step="0.01" value="0.30" />
+      </label>
+      <label>Crossover p <span class="val" id="cx-v">0.7</span>
+        <input type="range" id="cx" min="0" max="1" step="0.05" value="0.7" />
+      </label>
+      <label>Eval reps <span class="val" id="reps-v">3</span>
+        <input type="range" id="reps" min="1" max="10" step="1" value="3" />
+      </label>
+      <button class="btn" id="step">▶ Run 1 generation</button>
+      <button class="btn alt" id="run">▶ Auto-run</button>
+      <button class="btn ghost" id="vis">Watch best</button>
+      <button class="btn ghost" id="reset">Reset</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="lbl">Generation</span><span class="v" id="s-g">0</span></div>
+      <div class="stat"><span class="lbl">Best fitness</span><span class="v" id="s-best">—</span></div>
+      <div class="stat"><span class="lbl">Avg fitness</span><span class="v" id="s-avg">—</span></div>
+      <div class="stat"><span class="lbl">Mean ‖w‖</span><span class="v" id="s-w">—</span></div>
+    </div>
+
+    <div class="split">
+      <div>
+        <h3 style="margin-top:0">Best-of-generation rollout</h3>
+        <div class="canvas-wrap"><canvas id="cart" width="540" height="240"></canvas></div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Population distribution (fitness)</h3>
+        <div class="canvas-wrap"><canvas id="popcv" width="540" height="240"></canvas></div>
+        <p class="muted" style="font-size:0.85rem;margin:0.3rem 0">Each dot = one genome. y-axis = fitness; x-axis = projection of weights.</p>
+      </div>
+    </div>
+
+    <h3>Best, mean, worst fitness per generation</h3>
+    <div class="canvas-wrap"><canvas id="histcv" width="1100" height="180"></canvas></div>
+    <div class="legend">
+      <span><span class="sw" style="background:#2dd4bf"></span>best</span>
+      <span><span class="sw" style="background:#00d4ff"></span>mean</span>
+      <span><span class="sw" style="background:#ff5c8a"></span>worst</span>
+    </div>
+  </div>
+
+  <h2>Genetic vs gradient</h2>
+  <table class="kv">
+    <tr><td>Pros</td><td>No gradient needed. Parallelisable. Works through non-differentiable rewards. Good for hyperparameter search / NAS.</td></tr>
+    <tr><td>Cons</td><td>Sample-inefficient — full episode per evaluation. Scales poorly to huge param vectors without ES tricks (OpenAI ES, NEAT, CMA-ES).</td></tr>
+    <tr><td>OpenAI ES</td><td>Pop = parameter noise. Fitness-weighted update: θ ← θ + α · Σ F<sub>i</sub> · ε<sub>i</sub>. Equivalent to a stochastic gradient via finite differences.</td></tr>
+  </table>
+
+  <div class="note"><strong>Try σ.</strong> Mutation rate too low = stuck in local optima. Too high = random drift. The sweet spot depends on problem scale — for linear CartPole, σ ≈ 0.3 usually solves in 10-20 generations.</div>
+
+  <p style="margin-top:2rem"><a href="dqn.html">← DQN</a> &nbsp;·&nbsp; <a href="multi-agent.html">Next: Multi-Agent →</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/evolution.js"></script>
+</body>
+</html>

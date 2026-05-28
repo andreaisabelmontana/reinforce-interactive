@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>REINFORCE — Policy Gradient</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">06 · REINFORCE — Policy Gradients</h1>
+  <p class="muted">Instead of learning a value function and being greedy, learn the policy directly. Parameterise π(a|s; θ) — usually as softmax — and use the policy gradient theorem to nudge θ in the direction of higher expected return.</p>
+
+  <div class="math">
+    Objective:&nbsp; J(θ) = 𝔼<sub>τ∼π<sub>θ</sub></sub> [ G(τ) ]<br/>
+    Policy gradient theorem:&nbsp; ∇<sub>θ</sub> J = 𝔼<sub>τ</sub> [ Σ<sub>t</sub> G<sub>t</sub> ∇<sub>θ</sub> log π<sub>θ</sub>(a<sub>t</sub> | s<sub>t</sub>) ]<br/>
+    REINFORCE update (per episode):&nbsp; θ ← θ + α · Σ<sub>t</sub> γᵗ · (G<sub>t</sub> − b) · ∇<sub>θ</sub> log π<sub>θ</sub>(a<sub>t</sub>|s<sub>t</sub>)
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — REINFORCE on a 5-state corridor</div>
+    <p class="muted">Five states in a row. Reward +1 at the rightmost. Each state has two actions (left/right). The policy is softmax over 2 logits per state. Watch θ drift towards "always right". The baseline (running mean return) drastically cuts variance.</p>
+
+    <div class="controls">
+      <label>Environment
+        <select id="env">
+          <option value="corridor">Corridor (5 states)</option>
+          <option value="windy">Windy corridor (stochastic)</option>
+          <option value="bandit2">Contextual bandit (3-state)</option>
+        </select>
+      </label>
+      <label>α (LR) <span class="val" id="alpha-v">0.10</span>
+        <input type="range" id="alpha" min="0.001" max="1" step="0.001" value="0.10" />
+      </label>
+      <label>γ <span class="val" id="gamma-v">0.99</span>
+        <input type="range" id="gamma" min="0.5" max="1" step="0.01" value="0.99" />
+      </label>
+      <label><input type="checkbox" id="baseline" checked /> use baseline (avg G)</label>
+      <label>Episodes/frame <span class="val" id="epf-v">1</span>
+        <input type="range" id="epf" min="1" max="40" step="1" value="1" />
+      </label>
+      <button class="btn" id="run">▶ Train</button>
+      <button class="btn ghost" id="step">+1 Episode</button>
+      <button class="btn ghost" id="reset">Reset θ</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="lbl">Episode</span><span class="v" id="s-ep">0</span></div>
+      <div class="stat"><span class="lbl">Last return</span><span class="v" id="s-g">—</span></div>
+      <div class="stat"><span class="lbl">Avg G (50)</span><span class="v" id="s-avg">—</span></div>
+      <div class="stat"><span class="lbl">Var(G, 50)</span><span class="v" id="s-var">—</span></div>
+      <div class="stat"><span class="lbl">Baseline b̄</span><span class="v" id="s-b">0.00</span></div>
+    </div>
+
+    <div class="split">
+      <div>
+        <h3 style="margin-top:0">Policy π(a|s) — softmax of θ</h3>
+        <div class="canvas-wrap"><canvas id="pcv" width="540" height="240"></canvas></div>
+        <p class="muted" style="font-size:0.85rem;margin:0.3rem 0">Each column is a state. The blue bar shows π(right|s), purple shows π(left|s).</p>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Last episode trajectory</h3>
+        <div class="canvas-wrap"><canvas id="tcv" width="540" height="240"></canvas></div>
+        <p class="muted" style="font-size:0.85rem;margin:0.3rem 0">Animated random rollouts under the current policy.</p>
+      </div>
+    </div>
+
+    <h3>Return per episode (raw vs moving avg)</h3>
+    <div class="canvas-wrap"><canvas id="rch" width="1100" height="180"></canvas></div>
+  </div>
+
+  <h2>Why policy gradients?</h2>
+  <table class="kv">
+    <tr><td>Continuous actions</td><td>Q-Learning needs <code>max<sub>a</sub> Q</code>. With continuous a, that max is hard. Policy gradients just sample.</td></tr>
+    <tr><td>Stochastic optimal policies</td><td>Some problems require randomised action (e.g., rock-paper-scissors). Q-Learning converges to deterministic policies.</td></tr>
+    <tr><td>Smooth optimisation</td><td>Small change in θ → small change in π. With Q-Learning, a tiny change can flip the argmax.</td></tr>
+    <tr><td>High variance</td><td>The downside: G<sub>t</sub> from sample returns is noisy. Hence baselines, advantage, A2C, PPO …</td></tr>
+  </table>
+
+  <div class="note"><strong>Try toggling the baseline.</strong> Without it, the gradient estimate is unbiased but high-variance — learning is jittery. Subtracting <em>any</em> state-only baseline keeps it unbiased and cuts variance. A2C (next page) takes this further by learning the baseline as a critic.</div>
+
+  <p style="margin-top:2rem"><a href="function-approx.html">← Function Approximation</a> &nbsp;·&nbsp; <a href="actor-critic.html">Next: Actor-Critic →</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/policy-gradient.js"></script>
+</body>
+</html>

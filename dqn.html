@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DQN — REINFORCE</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">08 · Deep Q-Networks</h1>
+  <p class="muted">Q-Learning + neural net = DQN. Replace the Q-table with a network Q(s, a; θ). To prevent divergence: store transitions in a <strong>replay buffer</strong>, sample mini-batches uniformly, and bootstrap from a slow-moving <strong>target network</strong>.</p>
+
+  <div class="math">
+    Loss:&nbsp; L(θ) = 𝔼<sub>(s,a,r,s′)∼D</sub> [ ( r + γ max<sub>a′</sub> Q(s′,a′; θ⁻) − Q(s,a; θ) )² ]<br/>
+    Update:&nbsp; θ ← θ − α · ∇<sub>θ</sub> L &nbsp;·· every C steps:&nbsp; θ⁻ ← θ
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — DQN on Mountain Car (2-D state, 3 actions)</div>
+    <p class="muted">An under-powered car in a valley. State = (position, velocity). Three actions: push left / coast / push right. Goal = reach the flag on the right. Solving needs to swing back-and-forth to build momentum — Q-Learning has to learn that nuance.</p>
+
+    <div class="controls">
+      <label>Hidden units <span class="val" id="h-v">32</span>
+        <input type="range" id="h" min="8" max="128" step="4" value="32" />
+      </label>
+      <label>α <span class="val" id="alpha-v">0.003</span>
+        <input type="range" id="alpha" min="0.0001" max="0.02" step="0.0001" value="0.003" />
+      </label>
+      <label>γ <span class="val" id="gamma-v">0.99</span>
+        <input type="range" id="gamma" min="0.8" max="1" step="0.01" value="0.99" />
+      </label>
+      <label>ε start→end <span class="val" id="eps-v">1.0 → 0.05</span>
+        <input type="range" id="eps" min="0" max="100" step="1" value="0" />
+      </label>
+      <label>Batch <span class="val" id="bs-v">32</span>
+        <input type="range" id="bs" min="8" max="128" step="8" value="32" />
+      </label>
+      <label>Target sync <span class="val" id="ts-v">100</span>
+        <input type="range" id="ts" min="10" max="500" step="10" value="100" />
+      </label>
+      <label>Steps/frame <span class="val" id="spf-v">5</span>
+        <input type="range" id="spf" min="1" max="40" step="1" value="5" />
+      </label>
+      <button class="btn" id="run">▶ Train</button>
+      <button class="btn ghost" id="step">+200 steps</button>
+      <button class="btn ghost" id="rollout">Eval rollout</button>
+      <button class="btn ghost" id="reset">Reset</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="lbl">Total steps</span><span class="v" id="s-step">0</span></div>
+      <div class="stat"><span class="lbl">Episodes</span><span class="v" id="s-ep">0</span></div>
+      <div class="stat"><span class="lbl">Best return</span><span class="v" id="s-best">—</span></div>
+      <div class="stat"><span class="lbl">Avg G (20)</span><span class="v" id="s-avg">—</span></div>
+      <div class="stat"><span class="lbl">ε now</span><span class="v" id="s-eps">1.00</span></div>
+      <div class="stat"><span class="lbl">Replay size</span><span class="v" id="s-rb">0</span></div>
+      <div class="stat"><span class="lbl">Loss</span><span class="v" id="s-loss">—</span></div>
+    </div>
+
+    <div class="split">
+      <div>
+        <h3 style="margin-top:0">Environment</h3>
+        <div class="canvas-wrap"><canvas id="env" width="540" height="260"></canvas></div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Q-values heatmap (max over a)</h3>
+        <div class="canvas-wrap"><canvas id="qmap" width="540" height="260"></canvas></div>
+        <p class="muted" style="font-size:0.82rem">x = position, y = velocity. Brighter = higher value. Arrows show greedy action.</p>
+      </div>
+    </div>
+
+    <h3>Return per episode &amp; loss</h3>
+    <div class="canvas-wrap"><canvas id="charts" width="1100" height="220"></canvas></div>
+    <div class="legend">
+      <span><span class="sw" style="background:#00d4ff"></span>Return G</span>
+      <span><span class="sw" style="background:#ff5c8a"></span>Loss (log)</span>
+    </div>
+  </div>
+
+  <h2>Why these tricks?</h2>
+  <table class="kv">
+    <tr><td>Replay buffer</td><td>Breaks correlation between consecutive samples (which causes wild gradient updates). Lets us reuse data — sample efficiency.</td></tr>
+    <tr><td>Target network</td><td>The TD target is moving — if you bootstrap off the same net you're updating, you chase your own tail. Freezing θ⁻ for C steps stabilises learning.</td></tr>
+    <tr><td>ε decay</td><td>Explore early, exploit late. Linear or exponential schedule.</td></tr>
+    <tr><td>Double DQN</td><td>Decouple action selection from evaluation: a* = argmax Q(s′, ·; θ), target = Q(s′, a*; θ⁻). Reduces over-estimation.</td></tr>
+  </table>
+
+  <div class="note"><strong>Be patient.</strong> Mountain Car is hard for DQN — reward is sparse (only at the flag). A random policy almost never reaches the flag, so the Q-net has nothing to learn from initially. Click Eval rollout periodically to see if the policy has "got it".</div>
+
+  <p style="margin-top:2rem"><a href="actor-critic.html">← Actor-Critic</a> &nbsp;·&nbsp; <a href="evolution.html">Next: Evolutionary →</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/dqn.js"></script>
+</body>
+</html>

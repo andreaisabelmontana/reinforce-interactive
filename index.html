@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>REINFORCE — Interactive RL</title>
+<meta name="description" content="Interactive visualisations of every core Reinforcement Learning concept: bandits, MDPs, DP, Monte Carlo, TD, function approximation, policy gradients, actor-critic, DQN, evolution, and multi-agent." />
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <section class="hero">
+    <div class="tagline">An interactive RL playground</div>
+    <h1>Reinforcement Learning,<br/>Made Tangible.</h1>
+    <p>Every core concept from the course — from bandits to actor-critic — rendered as a live demo you can poke, tweak, and watch learn in real time.</p>
+  </section>
+
+  <h2>The Foundations</h2>
+  <p class="muted">An agent acts in an environment. The environment returns a state and a reward. The agent's job: learn a <strong>policy</strong> <code>π(a|s)</code> that maximises expected cumulative return <code>G = Σ γᵏ r</code>. Every page below explores one slice of how that learning happens.</p>
+
+  <div class="grid cards" style="margin-top:1.5rem">
+
+    <a href="bandits.html" class="card">
+      <span class="num">01</span>
+      <h3>Multi-Armed Bandits</h3>
+      <p>The exploration–exploitation dilemma in its purest form. ε-greedy, UCB, Thompson sampling, gradient bandits — pull arms and watch regret accumulate.</p>
+      <span class="tag">exploration · regret</span>
+    </a>
+
+    <a href="mdp.html" class="card">
+      <span class="num">02</span>
+      <h3>MDPs & Gridworld</h3>
+      <p>States, actions, transitions, rewards. Draw your own gridworld, place rewards and walls, and see the Bellman equation in action.</p>
+      <span class="tag">states · actions · γ</span>
+    </a>
+
+    <a href="dp.html" class="card">
+      <span class="num">03</span>
+      <h3>Dynamic Programming</h3>
+      <p>Value Iteration and Policy Iteration. Sweep the Bellman optimality update across the grid and watch v* and π* converge.</p>
+      <span class="tag">bellman · planning</span>
+    </a>
+
+    <a href="td.html" class="card">
+      <span class="num">04</span>
+      <h3>Monte Carlo &amp; TD Learning</h3>
+      <p>Model-free: SARSA, Q-Learning, Expected SARSA, Monte Carlo control. The cliff-walking classic, side-by-side.</p>
+      <span class="tag">sarsa · q-learning · α</span>
+    </a>
+
+    <a href="function-approx.html" class="card">
+      <span class="num">05</span>
+      <h3>Function Approximation</h3>
+      <p>Tabular doesn't scale. Watch tile-coding, RBFs, and polynomial features approximate a value function with SGD.</p>
+      <span class="tag">features · sgd · generalisation</span>
+    </a>
+
+    <a href="policy-gradient.html" class="card">
+      <span class="num">06</span>
+      <h3>Policy Gradients (REINFORCE)</h3>
+      <p>The namesake algorithm. Sample full episodes, scale log-probabilities by returns, and steer the policy directly.</p>
+      <span class="tag">∇log π · variance</span>
+    </a>
+
+    <a href="actor-critic.html" class="card">
+      <span class="num">07</span>
+      <h3>Actor-Critic (A2C)</h3>
+      <p>Add a learned baseline. Two networks: one acts, one critiques. See how variance drops compared to vanilla REINFORCE.</p>
+      <span class="tag">baseline · advantage</span>
+    </a>
+
+    <a href="dqn.html" class="card">
+      <span class="num">08</span>
+      <h3>Deep Q-Networks</h3>
+      <p>Neural Q-function for continuous state spaces. Replay buffer, target network, ε-decay — the trio that beat Atari.</p>
+      <span class="tag">replay · target net</span>
+    </a>
+
+    <a href="evolution.html" class="card">
+      <span class="num">09</span>
+      <h3>Evolutionary Methods</h3>
+      <p>No gradients, no problem. A genetic algorithm evolves a population of policies to balance a pole.</p>
+      <span class="tag">selection · mutation</span>
+    </a>
+
+    <a href="multi-agent.html" class="card">
+      <span class="num">10</span>
+      <h3>Multi-Agent RL</h3>
+      <p>The Axelrod tournament. Pit Tit-for-Tat against Always Defect, Grim, Pavlov, and friends in iterated prisoner's dilemma.</p>
+      <span class="tag">game theory · cooperation</span>
+    </a>
+
+  </div>
+
+  <h2 style="margin-top:3rem">How to use this site</h2>
+  <div class="note">
+    Each page is <strong>self-contained</strong>. Open it, hit <em>Run</em>, and play with the sliders.
+    The maths panel on each demo shows the exact update rule being applied — change a parameter and watch its effect immediately.
+    <br/><br/>
+    Nothing is precomputed. Every chart on every page is a real algorithm running in your browser. Source: vanilla JS, no frameworks.
+  </div>
+
+  <h2>Concept Map</h2>
+  <div class="canvas-wrap"><canvas id="map" width="1100" height="380"></canvas></div>
+
+</main>
+
+<footer>
+  Built from the REINFORCE course materials · all visualisations run locally in your browser.
+</footer>
+
+<script src="js/common.js"></script>
+<script>
+// Concept map: nodes & edges showing how the topics relate
+(function(){
+  const canvas = document.getElementById('map');
+  const W = 1100, H = 380;
+  const ctx = setupCanvas(canvas, W, H);
+  clearCanvas(ctx, '#050811');
+
+  const nodes = [
+    { id:'bandit', x:90, y:200, label:'Bandits', sub:'k-arm, ε / UCB' },
+    { id:'mdp',    x:240, y:200, label:'MDPs', sub:'states · γ' },
+    { id:'dp',     x:400, y:90,  label:'Dynamic Prog.', sub:'value iter.' },
+    { id:'mc',     x:400, y:200, label:'Monte Carlo', sub:'episodic' },
+    { id:'td',     x:400, y:310, label:'TD Learning', sub:'sarsa / Q' },
+    { id:'fa',     x:580, y:200, label:'Function Approx', sub:'features · NN' },
+    { id:'dqn',    x:760, y:90,  label:'DQN', sub:'deep value' },
+    { id:'pg',     x:760, y:200, label:'REINFORCE', sub:'∇log π · G' },
+    { id:'ac',     x:760, y:310, label:'Actor-Critic', sub:'A2C / PPO' },
+    { id:'evo',    x:940, y:90,  label:'Evolution', sub:'gradient-free' },
+    { id:'ma',     x:940, y:310, label:'Multi-Agent', sub:'game theory' },
+  ];
+  const edges = [
+    ['bandit','mdp'],['mdp','dp'],['mdp','mc'],['mdp','td'],
+    ['mc','fa'],['td','fa'],['dp','fa'],
+    ['fa','dqn'],['fa','pg'],['fa','ac'],
+    ['pg','ac'],['ac','ma'],['pg','evo']
+  ];
+  // edges
+  for (const [a,b] of edges) {
+    const na = nodes.find(n=>n.id===a), nb = nodes.find(n=>n.id===b);
+    const grad = ctx.createLinearGradient(na.x, na.y, nb.x, nb.y);
+    grad.addColorStop(0, '#7c5cff66');
+    grad.addColorStop(1, '#00d4ff66');
+    ctx.strokeStyle = grad; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(na.x, na.y); ctx.lineTo(nb.x, nb.y); ctx.stroke();
+  }
+  // nodes
+  for (const n of nodes) {
+    ctx.beginPath();
+    ctx.fillStyle = '#121829';
+    ctx.strokeStyle = '#7c5cff';
+    ctx.lineWidth = 1.5;
+    ctx.arc(n.x, n.y, 36, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e6ecff';
+    ctx.font = 'bold 11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(n.label, n.x, n.y - 2);
+    ctx.fillStyle = '#8a93b3';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.fillText(n.sub, n.x, n.y + 11);
+  }
+  ctx.textAlign = 'start';
+})();
+</script>
+</body>
+</html>

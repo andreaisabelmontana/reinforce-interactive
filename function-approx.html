@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Function Approximation — REINFORCE</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">05 · Function Approximation</h1>
+  <p class="muted">Tabular methods break when the state space is huge or continuous. The fix: represent v̂(s, w) or q̂(s, a, w) with a parameterised function — features × weights, or a neural net. Then learn w by gradient descent on the TD or MC error.</p>
+
+  <div class="math">
+    Linear value function:&nbsp; v̂(s, w) = w<sup>T</sup> φ(s)<br/>
+    Semi-gradient TD update:&nbsp; w ← w + α [ r + γ v̂(s′, w) − v̂(s, w) ] ∇<sub>w</sub> v̂(s, w)<br/>
+    For linear:&nbsp; ∇<sub>w</sub> v̂(s,w) = φ(s)
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — approximating a noisy target function</div>
+    <p class="muted">A toy 1-D value function is hidden inside <code>v*(s) = sin(3s) + 0.3·s</code>. We collect noisy samples and fit v̂(s,w) using different feature bases. Watch generalisation behaviour.</p>
+
+    <div class="controls">
+      <label>Feature basis
+        <select id="basis">
+          <option value="poly">Polynomial</option>
+          <option value="rbf" selected>RBF (Gaussian)</option>
+          <option value="tile">Tile coding</option>
+          <option value="fourier">Fourier</option>
+          <option value="nn">Tiny Neural Net</option>
+        </select>
+      </label>
+      <label># features <span class="val" id="nf-v">20</span>
+        <input type="range" id="nf" min="2" max="100" step="1" value="20" />
+      </label>
+      <label>α (LR) <span class="val" id="alpha-v">0.05</span>
+        <input type="range" id="alpha" min="0.001" max="0.5" step="0.001" value="0.05" />
+      </label>
+      <label>Noise σ <span class="val" id="noise-v">0.20</span>
+        <input type="range" id="noise" min="0" max="1" step="0.01" value="0.20" />
+      </label>
+      <label>Samples/step <span class="val" id="sps-v">10</span>
+        <input type="range" id="sps" min="1" max="100" step="1" value="10" />
+      </label>
+      <button class="btn" id="run">▶ Train</button>
+      <button class="btn ghost" id="step">+100 samples</button>
+      <button class="btn ghost" id="reset">Reset</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="lbl">Samples seen</span><span class="v" id="s-n">0</span></div>
+      <div class="stat"><span class="lbl">MSE</span><span class="v" id="s-mse">—</span></div>
+      <div class="stat"><span class="lbl">‖w‖</span><span class="v" id="s-w">—</span></div>
+      <div class="stat"><span class="lbl">d (params)</span><span class="v" id="s-d">—</span></div>
+    </div>
+
+    <div class="canvas-wrap"><canvas id="fa" width="1100" height="380"></canvas></div>
+    <div class="legend">
+      <span><span class="sw" style="background:#2dd4bf"></span>True v*(s)</span>
+      <span><span class="sw" style="background:#00d4ff"></span>v̂(s, w) — learned</span>
+      <span><span class="sw" style="background:#ff5c8a"></span>Noisy samples</span>
+      <span><span class="sw" style="background:#7c5cff"></span>Active features (faded)</span>
+    </div>
+
+    <h3>MSE over time</h3>
+    <div class="canvas-wrap"><canvas id="mse-chart" width="1100" height="180"></canvas></div>
+  </div>
+
+  <h2>The four families</h2>
+  <table class="kv">
+    <tr><td>Polynomial</td><td>φ(s) = [1, s, s², s³, …]. Easy. Bad at expressing local detail without huge order. Numerically unstable.</td></tr>
+    <tr><td>RBF (Gaussian)</td><td>φᵢ(s) = exp(−|s−cᵢ|² / 2σ²). Local features. Good interpolation. Choose centres & widths.</td></tr>
+    <tr><td>Tile coding</td><td>Sparse binary features from overlapping grids. Fast lookup. Used in Mountain Car & much classic RL.</td></tr>
+    <tr><td>Fourier</td><td>φᵢ(s) = cos(iπs). Global basis. Surprisingly strong on bounded domains.</td></tr>
+    <tr><td>Neural Net</td><td>Non-linear, learns features. Powerful but loses convergence guarantees (deadly triad).</td></tr>
+  </table>
+
+  <div class="note"><strong>The Deadly Triad:</strong> bootstrapping + off-policy + function approximation can diverge. DQN works around this with replay buffers and target networks.</div>
+
+  <p style="margin-top:2rem"><a href="td.html">← MC / TD</a> &nbsp;·&nbsp; <a href="policy-gradient.html">Next: REINFORCE →</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/function-approx.js"></script>
+</body>
+</html>

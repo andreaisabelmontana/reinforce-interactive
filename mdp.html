@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MDP & Gridworld — REINFORCE</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">02 · Markov Decision Processes</h1>
+  <p class="muted">A bandit only has one state. An MDP has many. The agent is now in <em>state s</em>, picks action <em>a</em>, transitions to <em>s′</em> with probability <em>P(s′|s,a)</em>, and gets reward <em>r</em>. Repeat. The "Markov" bit: where you go next depends only on where you are now, not how you got there.</p>
+
+  <div class="math">
+    MDP &nbsp;=&nbsp; ⟨ S, A, P, R, γ ⟩<br/>
+    Return&nbsp; G<sub>t</sub> = r<sub>t+1</sub> + γ&middot;r<sub>t+2</sub> + γ²&middot;r<sub>t+3</sub> + … = Σ<sub>k</sub> γᵏ r<sub>t+k+1</sub><br/>
+    State value &nbsp; vπ(s) = 𝔼<sub>π</sub>[ G<sub>t</sub> | s<sub>t</sub>=s ]<br/>
+    Bellman &nbsp; vπ(s) = Σ<sub>a</sub> π(a|s) Σ<sub>s′,r</sub> p(s′,r|s,a) [ r + γ vπ(s′) ]
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — build a gridworld, watch transitions</div>
+
+    <div class="controls">
+      <label>Edit mode
+        <select id="mode">
+          <option value="wall">Wall</option>
+          <option value="goal">Goal (★)</option>
+          <option value="pit">Pit (✖)</option>
+          <option value="start">Start</option>
+          <option value="erase">Erase</option>
+        </select>
+      </label>
+      <label>Rows <span class="val" id="rows-v">5</span>
+        <input type="range" id="rows" min="3" max="10" step="1" value="5" />
+      </label>
+      <label>Cols <span class="val" id="cols-v">7</span>
+        <input type="range" id="cols" min="3" max="12" step="1" value="7" />
+      </label>
+      <label>Slip prob. <span class="val" id="slip-v">0.10</span>
+        <input type="range" id="slip" min="0" max="0.5" step="0.01" value="0.10" />
+      </label>
+      <label>γ <span class="val" id="gamma-v">0.95</span>
+        <input type="range" id="gamma" min="0.5" max="1" step="0.01" value="0.95" />
+      </label>
+      <label>Step reward <span class="val" id="sr-v">-0.04</span>
+        <input type="range" id="sr" min="-1" max="0" step="0.01" value="-0.04" />
+      </label>
+      <button class="btn ghost" id="reset">Reset Grid</button>
+    </div>
+
+    <p class="muted" style="margin:0.5rem 0">Click cells to edit. Use the random policy below — agent picks <code>a</code> uniformly at random and you'll see how the slip probability bends its trajectory.</p>
+
+    <div class="split">
+      <div>
+        <div class="canvas-wrap"><canvas id="grid" width="400" height="280"></canvas></div>
+
+        <div class="controls">
+          <button class="btn" id="run">▶ Run Random Policy</button>
+          <button class="btn ghost" id="stepb">Step</button>
+          <button class="btn ghost" id="resetag">Reset Agent</button>
+          <label>Speed
+            <input type="range" id="speed" min="1" max="60" step="1" value="8" />
+          </label>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><span class="lbl">Episode</span><span class="v" id="s-ep">0</span></div>
+          <div class="stat"><span class="lbl">Step t</span><span class="v" id="s-t">0</span></div>
+          <div class="stat"><span class="lbl">Return G</span><span class="v" id="s-g">0.00</span></div>
+          <div class="stat"><span class="lbl">Avg return</span><span class="v" id="s-avg">0.00</span></div>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="margin-top:0">Transition for current state</h3>
+        <p class="muted" style="font-size:0.88rem">Showing the action distribution from state <code id="cur-s">(s)</code> for each of the 4 actions and the resulting next-state probabilities.</p>
+        <div id="trans-display" style="font-family:var(--mono);font-size:0.82rem"></div>
+
+        <h3>Return chart</h3>
+        <div class="canvas-wrap"><canvas id="g-chart" width="500" height="180"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Key vocabulary</h2>
+  <table class="kv">
+    <tr><td>state s</td><td>What the agent observes. Here: which cell it's in.</td></tr>
+    <tr><td>action a</td><td>What the agent does. Here: ↑ → ↓ ←.</td></tr>
+    <tr><td>reward r</td><td>Scalar feedback after each action. Step penalty + terminal bonus.</td></tr>
+    <tr><td>policy π</td><td>Function from state to action distribution. <code>π(a|s)</code>.</td></tr>
+    <tr><td>return G</td><td>Sum of discounted future rewards.</td></tr>
+    <tr><td>γ discount</td><td>How much you care about the far future (0 = myopic, 1 = patient).</td></tr>
+    <tr><td>v(s)</td><td>Expected return starting from s.</td></tr>
+    <tr><td>q(s,a)</td><td>Expected return after taking a in s.</td></tr>
+  </table>
+
+  <div class="note"><strong>Why "Markov"?</strong> The next state distribution depends only on (s, a), not the entire history. This makes the problem tractable: we only need to learn v(s) or q(s,a), not v(trajectory).</div>
+
+  <p style="margin-top:2rem"><a href="bandits.html">← Bandits</a> &nbsp;·&nbsp; <a href="dp.html">Next: Dynamic Programming →</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/gridworld.js"></script>
+<script>
+(function(){
+  let gw = makeDefaultGrid(5, 7);
+  const canvas = document.getElementById('grid');
+  const cellSize = 56;
+  const ctx = setupCanvas(canvas, gw.cols * cellSize, gw.rows * cellSize);
+
+  let agent = {...gw.start};
+  let t = 0, episode = 0, G = 0, returns = [];
+
+  function rebuild() {
+    const rows = parseInt(document.getElementById('rows').value);
+    const cols = parseInt(document.getElementById('cols').value);
+    document.getElementById('rows-v').textContent = rows;
+    document.getElementById('cols-v').textContent = cols;
+    gw = new Gridworld(rows, cols, { start:{r: rows-1, c:0}, slip: parseFloat(document.getElementById('slip').value) });
+    gw.cells[0][cols-1] = CELL.GOAL;
+    setupCanvas(canvas, cols*cellSize, rows*cellSize);
+    resetAgent();
+    redraw();
+  }
+
+  function syncParams() {
+    gw.slip = parseFloat(document.getElementById('slip').value);
+    gw.gamma = parseFloat(document.getElementById('gamma').value);
+    gw.stepReward = parseFloat(document.getElementById('sr').value);
+    document.getElementById('slip-v').textContent = gw.slip.toFixed(2);
+    document.getElementById('gamma-v').textContent = gw.gamma.toFixed(2);
+    document.getElementById('sr-v').textContent = gw.stepReward.toFixed(2);
+  }
+
+  function resetAgent() {
+    agent = {...gw.start};
+    t = 0; G = 0;
+    document.getElementById('s-t').textContent = t;
+    document.getElementById('s-g').textContent = G.toFixed(2);
+    updateTrans();
+  }
+
+  function redraw() {
+    drawGrid(ctx, gw, { agent, cellSize });
+    updateTrans();
+  }
+
+  function updateTrans() {
+    const div = document.getElementById('trans-display');
+    document.getElementById('cur-s').textContent = `(${agent.r},${agent.c})`;
+    let html = '';
+    for (let a = 0; a < 4; a++) {
+      const ts = gw.transitions(agent.r, agent.c, a);
+      html += `<div style="margin-bottom:0.45rem"><span style="color:#7c5cff">${Gridworld.ARROW[a]}</span> `;
+      html += ts.map(t => `<span style="color:#8a93b3">P=${(t.p*100).toFixed(0)}%</span> → (${t.r1},${t.c1}) <span style="color:#2dd4bf">r=${t.reward.toFixed(2)}</span>`).join(' &nbsp;|&nbsp; ');
+      html += '</div>';
+    }
+    div.innerHTML = html;
+  }
+
+  function stepAgent() {
+    if (gw.isTerminal(agent.r, agent.c)) { endEpisode(); return; }
+    const a = Math.floor(Math.random() * 4); // random policy
+    const trans = gw.sample(agent.r, agent.c, a);
+    G += Math.pow(gw.gamma, t) * trans.reward;
+    agent = {r: trans.r1, c: trans.c1};
+    t++;
+    if (trans.done || t > 200) endEpisode();
+    document.getElementById('s-t').textContent = t;
+    document.getElementById('s-g').textContent = G.toFixed(2);
+  }
+
+  function endEpisode() {
+    returns.push(G);
+    episode++;
+    document.getElementById('s-ep').textContent = episode;
+    const avg = returns.reduce((a,b)=>a+b,0) / returns.length;
+    document.getElementById('s-avg').textContent = avg.toFixed(3);
+    drawChart();
+    setTimeout(() => { resetAgent(); redraw(); }, 200);
+  }
+
+  const gctx = setupCanvas(document.getElementById('g-chart'), 500, 180);
+  function drawChart() {
+    clearCanvas(gctx);
+    drawAxes(gctx, 35, 160, 450, 130, { xLabel: 'episode', yLabel: 'G' });
+    if (returns.length > 1) drawSeries(gctx, returns, 35, 160, 450, 130, { color: '#00d4ff' });
+  }
+
+  bindGridEditor(canvas, gw, () => document.getElementById('mode').value, () => { resetAgent(); redraw(); }, cellSize);
+
+  const loop = new Loop(() => { stepAgent(); redraw(); }, { stepsPerFrame: 8 });
+  document.getElementById('run').addEventListener('click', () => {
+    if (loop.running) { loop.stop(); document.getElementById('run').textContent = '▶ Run Random Policy'; }
+    else { loop.start(); document.getElementById('run').textContent = '⏸ Pause'; }
+  });
+  document.getElementById('stepb').addEventListener('click', () => { stepAgent(); redraw(); });
+  document.getElementById('resetag').addEventListener('click', () => { resetAgent(); redraw(); });
+  document.getElementById('reset').addEventListener('click', () => { rebuild(); });
+  document.getElementById('rows').addEventListener('input', rebuild);
+  document.getElementById('cols').addEventListener('input', rebuild);
+  document.getElementById('slip').addEventListener('input', () => { syncParams(); redraw(); });
+  document.getElementById('gamma').addEventListener('input', syncParams);
+  document.getElementById('sr').addEventListener('input', syncParams);
+  document.getElementById('speed').addEventListener('input', () => { loop.stepsPerFrame = parseInt(document.getElementById('speed').value); });
+
+  redraw();
+})();
+</script>
+</body>
+</html>

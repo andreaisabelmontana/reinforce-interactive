@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dynamic Programming — REINFORCE</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">03 · Dynamic Programming</h1>
+  <p class="muted">When you <em>know</em> the MDP (transitions P and rewards R), you can solve it directly. The Bellman equations become an iterative update — sweep through every state, replace its value with the expected value of the best one-step move, repeat until nothing changes.</p>
+
+  <div class="math">
+    Value Iteration:&nbsp; v<sub>k+1</sub>(s) = max<sub>a</sub> Σ<sub>s′,r</sub> p(s′,r|s,a) [ r + γ v<sub>k</sub>(s′) ]<br/>
+    Policy Iteration:&nbsp; alternate { Policy Eval → v<sub>π</sub> } then { Policy Improve → π′(s) = argmax<sub>a</sub> q(s,a) }
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — sweep the Bellman backup across the grid</div>
+
+    <div class="controls">
+      <label>Algorithm
+        <select id="alg">
+          <option value="vi" selected>Value Iteration</option>
+          <option value="pi">Policy Iteration</option>
+        </select>
+      </label>
+      <label>γ <span class="val" id="gamma-v">0.95</span>
+        <input type="range" id="gamma" min="0.5" max="1" step="0.01" value="0.95" />
+      </label>
+      <label>Slip <span class="val" id="slip-v">0.10</span>
+        <input type="range" id="slip" min="0" max="0.5" step="0.01" value="0.10" />
+      </label>
+      <label>Step reward <span class="val" id="sr-v">-0.04</span>
+        <input type="range" id="sr" min="-1" max="0" step="0.01" value="-0.04" />
+      </label>
+      <label>Edit
+        <select id="mode">
+          <option value="wall">Wall</option>
+          <option value="goal">Goal</option>
+          <option value="pit">Pit</option>
+          <option value="start">Start</option>
+          <option value="erase">Erase</option>
+        </select>
+      </label>
+      <button class="btn" id="step1">Step ×1</button>
+      <button class="btn" id="step10">Step ×10</button>
+      <button class="btn alt" id="solve">Solve to convergence</button>
+      <button class="btn ghost" id="reset">Reset values</button>
+      <button class="btn ghost" id="rollout">Run π*</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="lbl">Iteration</span><span class="v" id="s-k">0</span></div>
+      <div class="stat"><span class="lbl">Max Δ</span><span class="v" id="s-d">—</span></div>
+      <div class="stat"><span class="lbl">Converged?</span><span class="v" id="s-conv">no</span></div>
+      <div class="stat"><span class="lbl">v(start)</span><span class="v" id="s-vs">—</span></div>
+    </div>
+
+    <div class="split" style="margin-top:1rem">
+      <div>
+        <h3 style="margin-top:0">Value function v(s)</h3>
+        <div class="canvas-wrap"><canvas id="vgrid" width="500" height="350"></canvas></div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Greedy policy π(s)</h3>
+        <div class="canvas-wrap"><canvas id="pgrid" width="500" height="350"></canvas></div>
+      </div>
+    </div>
+
+    <h3>Δ convergence</h3>
+    <div class="canvas-wrap"><canvas id="dchart" width="1000" height="160"></canvas></div>
+  </div>
+
+  <h2>Value Iteration vs Policy Iteration</h2>
+  <table class="kv">
+    <tr><td>Value Iter</td><td>One Bellman <em>optimality</em> sweep per iteration. Combines eval & improve. Simple.</td></tr>
+    <tr><td>Policy Iter</td><td>Full policy evaluation, then policy improvement, then repeat. Each policy improvement is monotonic. Often converges in few outer iterations.</td></tr>
+    <tr><td>Asynchronous DP</td><td>Backup states in any order, not full sweeps. Good when state space is huge.</td></tr>
+  </table>
+
+  <div class="note"><strong>The cost of knowing the model:</strong> DP requires complete knowledge of P and R. Real problems usually don't give you that. Monte Carlo and TD (next pages) drop this requirement — they learn from samples alone.</div>
+
+  <p style="margin-top:2rem"><a href="mdp.html">← MDP</a> &nbsp;·&nbsp; <a href="td.html">Next: MC / TD →</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/gridworld.js"></script>
+<script>
+(function(){
+  let gw = makeDefaultGrid(5, 7);
+  const cellSize = 64;
+  const vctx = setupCanvas(document.getElementById('vgrid'), gw.cols*cellSize, gw.rows*cellSize);
+  const pctx = setupCanvas(document.getElementById('pgrid'), gw.cols*cellSize, gw.rows*cellSize);
+
+  let V = mkV(); let policy = mkPolicy();
+  let k = 0; let deltas = []; let converged = false;
+
+  function mkV() { return Array.from({length: gw.rows}, () => new Array(gw.cols).fill(0)); }
+  function mkPolicy() { return Array.from({length: gw.rows}, () => new Array(gw.cols).fill(0)); }
+
+  function actionValue(r, c, a) {
+    const ts = gw.transitions(r, c, a);
+    let q = 0;
+    for (const t of ts) q += t.p * (t.reward + gw.gamma * V[t.r1][t.c1]);
+    return q;
+  }
+
+  function greedyPolicy() {
+    const p = mkPolicy();
+    for (let r=0; r<gw.rows; r++) for (let c=0; c<gw.cols; c++) {
+      if (gw.isWall(r,c) || gw.isTerminal(r,c)) { p[r][c] = -1; continue; }
+      let best = -Infinity, bestA = 0;
+      for (let a=0; a<4; a++) { const q = actionValue(r,c,a); if (q > best) { best = q; bestA = a; } }
+      p[r][c] = bestA;
+    }
+    return p;
+  }
+
+  function viStep() {
+    let maxD = 0;
+    const Vn = mkV();
+    for (let r=0; r<gw.rows; r++) for (let c=0; c<gw.cols; c++) {
+      if (gw.isWall(r,c)) { Vn[r][c] = 0; continue; }
+      if (gw.isTerminal(r,c)) { Vn[r][c] = 0; continue; }
+      let best = -Infinity;
+      for (let a=0; a<4; a++) { const q = actionValue(r,c,a); if (q > best) best = q; }
+      Vn[r][c] = best;
+      maxD = Math.max(maxD, Math.abs(best - V[r][c]));
+    }
+    V = Vn;
+    policy = greedyPolicy();
+    k++;
+    deltas.push(maxD);
+    converged = maxD < 1e-4;
+    return maxD;
+  }
+
+  function piEvalSweep() {
+    let maxD = 0;
+    const Vn = mkV();
+    for (let r=0; r<gw.rows; r++) for (let c=0; c<gw.cols; c++) {
+      if (gw.isWall(r,c) || gw.isTerminal(r,c)) { Vn[r][c] = 0; continue; }
+      const a = policy[r][c];
+      Vn[r][c] = actionValue(r,c,a);
+      maxD = Math.max(maxD, Math.abs(Vn[r][c] - V[r][c]));
+    }
+    V = Vn;
+    return maxD;
+  }
+
+  function piStep() {
+    // do up to 20 eval sweeps until small delta, then improve
+    let lastD = 0;
+    for (let i = 0; i < 40; i++) {
+      lastD = piEvalSweep();
+      if (lastD < 1e-4) break;
+    }
+    const oldP = policy.map(row => row.slice());
+    policy = greedyPolicy();
+    // detect stable
+    let stable = true;
+    for (let r=0; r<gw.rows; r++) for (let c=0; c<gw.cols; c++) {
+      if (oldP[r][c] !== policy[r][c]) stable = false;
+    }
+    k++;
+    deltas.push(lastD);
+    converged = stable && lastD < 1e-4;
+    return lastD;
+  }
+
+  function step() {
+    const alg = document.getElementById('alg').value;
+    const d = alg === 'vi' ? viStep() : piStep();
+    document.getElementById('s-k').textContent = k;
+    document.getElementById('s-d').textContent = d.toExponential(2);
+    document.getElementById('s-conv').textContent = converged ? 'yes' : 'no';
+    document.getElementById('s-vs').textContent = V[gw.start.r][gw.start.c].toFixed(3);
+    redraw();
+  }
+
+  function reset() {
+    V = mkV(); policy = mkPolicy();
+    k = 0; deltas = []; converged = false;
+    document.getElementById('s-k').textContent = 0;
+    document.getElementById('s-d').textContent = '—';
+    document.getElementById('s-conv').textContent = 'no';
+    document.getElementById('s-vs').textContent = '—';
+    redraw();
+  }
+
+  function redraw() {
+    drawGrid(vctx, gw, { V, showValues: true, cellSize });
+    drawGrid(pctx, gw, { policy, showPolicy: true, V, cellSize });
+    const dctx = setupCanvas(document.getElementById('dchart'), 1000, 160);
+    clearCanvas(dctx);
+    drawAxes(dctx, 35, 140, 950, 110, { xLabel: 'iteration', yLabel: 'log Δ' });
+    if (deltas.length > 1) {
+      // log scale
+      const logs = deltas.map(d => Math.log10(Math.max(d, 1e-8)));
+      drawSeries(dctx, logs, 35, 140, 950, 110, { color: '#7c5cff' });
+    }
+  }
+
+  function syncParams() {
+    gw.gamma = parseFloat(document.getElementById('gamma').value);
+    gw.slip = parseFloat(document.getElementById('slip').value);
+    gw.stepReward = parseFloat(document.getElementById('sr').value);
+    document.getElementById('gamma-v').textContent = gw.gamma.toFixed(2);
+    document.getElementById('slip-v').textContent = gw.slip.toFixed(2);
+    document.getElementById('sr-v').textContent = gw.stepReward.toFixed(2);
+  }
+
+  document.getElementById('step1').addEventListener('click', step);
+  document.getElementById('step10').addEventListener('click', () => { for (let i=0;i<10;i++) step(); });
+  document.getElementById('solve').addEventListener('click', () => {
+    for (let i=0; i<500; i++) { step(); if (converged) break; }
+  });
+  document.getElementById('reset').addEventListener('click', reset);
+  document.getElementById('gamma').addEventListener('input', () => { syncParams(); });
+  document.getElementById('slip').addEventListener('input', () => { syncParams(); });
+  document.getElementById('sr').addEventListener('input', () => { syncParams(); });
+
+  bindGridEditor(document.getElementById('vgrid'), gw,
+    () => document.getElementById('mode').value, () => { reset(); }, cellSize);
+  bindGridEditor(document.getElementById('pgrid'), gw,
+    () => document.getElementById('mode').value, () => { reset(); }, cellSize);
+
+  // Rollout the greedy policy as a quick animation
+  document.getElementById('rollout').addEventListener('click', async () => {
+    let s = {...gw.start};
+    for (let i = 0; i < 60; i++) {
+      drawGrid(pctx, gw, { policy, showPolicy: true, V, cellSize, agent: s });
+      if (gw.isTerminal(s.r, s.c)) break;
+      const a = policy[s.r][s.c];
+      if (a < 0) break;
+      const t = gw.sample(s.r, s.c, a);
+      s = {r: t.r1, c: t.c1};
+      await new Promise(res => setTimeout(res, 200));
+    }
+  });
+
+  reset();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Multi-Agent — REINFORCE</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">10 · Multi-Agent RL — The Axelrod Tournament</h1>
+  <p class="muted">The environment now contains other learning agents. The Markov property breaks (the others are non-stationary). The classic study: Robert Axelrod's iterated prisoner's dilemma tournament (1980), which famously crowned <strong>Tit-for-Tat</strong>.</p>
+
+  <div class="math">
+    Payoff matrix (R, S, T, P):&nbsp;
+    (C,C) → (3,3),&nbsp; (C,D) → (0,5),&nbsp; (D,C) → (5,0),&nbsp; (D,D) → (1,1)<br/>
+    T &gt; R &gt; P &gt; S &nbsp;&nbsp; <span class="muted">(temptation, reward, punishment, sucker)</span>
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — round-robin tournament</div>
+    <p class="muted">Each strategy plays every other (and itself) for N rounds. The strategy with the highest <em>total</em> score wins. There is no "best response" in the abstract — strategies do well by exploiting weaknesses in their opponents.</p>
+
+    <div class="controls">
+      <label>Rounds per match <span class="val" id="rounds-v">200</span>
+        <input type="range" id="rounds" min="20" max="1000" step="20" value="200" />
+      </label>
+      <label>Noise <span class="val" id="noise-v">0.00</span>
+        <input type="range" id="noise" min="0" max="0.3" step="0.01" value="0.00" />
+      </label>
+      <label>Evolutionary rounds <span class="val" id="evo-v">0</span>
+        <input type="range" id="evo" min="0" max="200" step="1" value="0" />
+      </label>
+      <button class="btn" id="run">▶ Run Tournament</button>
+      <button class="btn alt" id="watch-duel">Watch one match</button>
+      <button class="btn ghost" id="reset">Reset</button>
+    </div>
+
+    <div class="split">
+      <div>
+        <h3 style="margin-top:0">Leaderboard</h3>
+        <table id="board" class="kv" style="width:100%">
+          <tr><th style="text-align:left;color:#8a93b3;padding:0.4rem 0">#</th><th style="text-align:left;color:#8a93b3">Strategy</th><th style="text-align:right;color:#8a93b3">Total</th><th style="text-align:right;color:#8a93b3">Avg/match</th></tr>
+        </table>
+      </div>
+      <div>
+        <h3 style="margin-top:0">Pairwise heatmap (average score for row)</h3>
+        <div class="canvas-wrap"><canvas id="heat" width="540" height="400"></canvas></div>
+      </div>
+    </div>
+
+    <h3>Single match replay</h3>
+    <div class="canvas-wrap"><canvas id="duel-canvas" width="1100" height="120"></canvas></div>
+    <div id="duel-info" class="muted" style="font-size:0.9rem;font-family:var(--mono);margin-top:0.4rem">Pick two strategies and click "Watch one match".</div>
+    <div class="controls">
+      <label>P1
+        <select id="p1"></select>
+      </label>
+      <label>P2
+        <select id="p2"></select>
+      </label>
+    </div>
+
+    <h3>Population dynamics (evolutionary mode)</h3>
+    <p class="muted" style="font-size:0.9rem">After each tournament, each strategy reproduces proportional to its score. Watch which behaviours dominate.</p>
+    <div class="canvas-wrap"><canvas id="pop" width="1100" height="220"></canvas></div>
+  </div>
+
+  <h2>The strategies</h2>
+  <table class="kv">
+    <tr><td>Always Cooperate</td><td>Always plays C. Maximally trusting. Exploited by defectors.</td></tr>
+    <tr><td>Always Defect</td><td>Always plays D. Strictly dominant in single-shot. Mutual defection in iterated.</td></tr>
+    <tr><td>Tit-for-Tat</td><td>Start with C, then copy opponent's last move. Nice, retaliatory, forgiving, simple.</td></tr>
+    <tr><td>Tit-for-Two-Tats</td><td>Only retaliate after two defections in a row. More forgiving.</td></tr>
+    <tr><td>Grim Trigger</td><td>Cooperate until opponent defects once, then defect forever.</td></tr>
+    <tr><td>Pavlov (Win-Stay/Lose-Shift)</td><td>Repeat last action if reward ≥ 3, switch otherwise. Self-correcting.</td></tr>
+    <tr><td>Random</td><td>50/50. Adds noise.</td></tr>
+    <tr><td>Joss</td><td>Tit-for-Tat with 10% sneaky defections. Tries to exploit pure TfT.</td></tr>
+    <tr><td>Suspicious TfT</td><td>Like TfT but starts with D.</td></tr>
+  </table>
+
+  <div class="note"><strong>Axelrod's four lessons:</strong> Be <em>nice</em> (don't be first to defect). Be <em>retaliatory</em> (punish defection). Be <em>forgiving</em> (don't hold grudges). Be <em>clear</em> (predictable behaviour invites cooperation).</div>
+
+  <p style="margin-top:2rem"><a href="evolution.html">← Evolutionary</a> &nbsp;·&nbsp; <a href="index.html">↩ Back to overview</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/multi-agent.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Actor-Critic — REINFORCE</title>
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC / TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="evolution.html">Evolution</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+</nav>
+
+<main>
+  <h1 style="font-size:2rem;margin-bottom:0.3rem">07 · Actor-Critic (A2C)</h1>
+  <p class="muted">REINFORCE uses the full Monte-Carlo return G — unbiased but high variance. <strong>Actor-Critic</strong> learns a value function v̂(s; w) alongside the policy and uses it as a baseline (or even as a one-step bootstrap target). Massively reduces variance, allows online learning.</p>
+
+  <div class="math">
+    Advantage:&nbsp; A<sub>t</sub> = r<sub>t+1</sub> + γ v̂(s<sub>t+1</sub>; w) − v̂(s<sub>t</sub>; w) &nbsp;&nbsp;<span class="muted">// the TD-error</span><br/>
+    Actor:&nbsp; θ ← θ + α<sub>θ</sub> · A<sub>t</sub> · ∇<sub>θ</sub> log π<sub>θ</sub>(a<sub>t</sub>|s<sub>t</sub>)<br/>
+    Critic:&nbsp; w ← w + α<sub>w</sub> · A<sub>t</sub> · ∇<sub>w</sub> v̂(s<sub>t</sub>; w)
+  </div>
+
+  <div class="demo">
+    <div class="demo-title">▶ live demo — REINFORCE vs A2C, same environment, side-by-side</div>
+
+    <div class="controls">
+      <label>Environment
+        <select id="env">
+          <option value="corridor" selected>5-state corridor</option>
+          <option value="windy">Windy corridor (slip 20%)</option>
+          <option value="long">Long corridor (10 states)</option>
+        </select>
+      </label>
+      <label>Actor α <span class="val" id="alphaa-v">0.10</span>
+        <input type="range" id="alphaa" min="0.001" max="0.5" step="0.001" value="0.10" />
+      </label>
+      <label>Critic α <span class="val" id="alphac-v">0.20</span>
+        <input type="range" id="alphac" min="0.001" max="1" step="0.001" value="0.20" />
+      </label>
+      <label>γ <span class="val" id="gamma-v">0.95</span>
+        <input type="range" id="gamma" min="0.5" max="1" step="0.01" value="0.95" />
+      </label>
+      <label>Episodes/frame <span class="val" id="epf-v">2</span>
+        <input type="range" id="epf" min="1" max="40" step="1" value="2" />
+      </label>
+      <button class="btn" id="run">▶ Train Both</button>
+      <button class="btn ghost" id="step">+1 Episode</button>
+      <button class="btn ghost" id="reset">Reset</button>
+    </div>
+
+    <div class="split">
+      <div class="card" style="padding:1rem">
+        <h3 style="margin-top:0;color:#7c5cff">REINFORCE (Monte Carlo baseline)</h3>
+        <div class="stats">
+          <div class="stat"><span class="lbl">Ep</span><span class="v" id="r-ep">0</span></div>
+          <div class="stat"><span class="lbl">Avg G (50)</span><span class="v" id="r-avg">—</span></div>
+          <div class="stat"><span class="lbl">Var(G, 50)</span><span class="v" id="r-var">—</span></div>
+        </div>
+        <h4>π(right|s)</h4>
+        <div class="canvas-wrap"><canvas id="r-pol" width="540" height="160"></canvas></div>
+      </div>
+
+      <div class="card" style="padding:1rem">
+        <h3 style="margin-top:0;color:#00d4ff">A2C (advantage actor-critic)</h3>
+        <div class="stats">
+          <div class="stat"><span class="lbl">Ep</span><span class="v" id="a-ep">0</span></div>
+          <div class="stat"><span class="lbl">Avg G (50)</span><span class="v" id="a-avg">—</span></div>
+          <div class="stat"><span class="lbl">Var(G, 50)</span><span class="v" id="a-var">—</span></div>
+        </div>
+        <h4>π(right|s) &amp; v̂(s)</h4>
+        <div class="canvas-wrap"><canvas id="a-pol" width="540" height="160"></canvas></div>
+      </div>
+    </div>
+
+    <h3>Return per episode</h3>
+    <div class="canvas-wrap"><canvas id="rchart" width="1100" height="220"></canvas></div>
+    <div class="legend">
+      <span><span class="sw" style="background:#7c5cff"></span>REINFORCE</span>
+      <span><span class="sw" style="background:#00d4ff"></span>A2C</span>
+    </div>
+  </div>
+
+  <h2>Spotting the difference</h2>
+  <table class="kv">
+    <tr><td>Variance</td><td>A2C's bootstrapped advantage has lower variance than a full return — learning curves are smoother.</td></tr>
+    <tr><td>Bias</td><td>A2C is biased early because v̂ is wrong. As v̂ improves, bias shrinks.</td></tr>
+    <tr><td>Online vs episodic</td><td>A2C can update at every step. REINFORCE waits for episode end.</td></tr>
+    <tr><td>Extensions</td><td>GAE (generalised advantage estimation), TRPO, PPO. All build on this idea.</td></tr>
+  </table>
+
+  <div class="note"><strong>The intuition:</strong> instead of asking "was this whole trajectory good?", A2C asks "did this <em>action</em> turn out better or worse than the critic <em>expected</em>?" That focused signal is what makes deep RL tractable on hard environments.</div>
+
+  <p style="margin-top:2rem"><a href="policy-gradient.html">← REINFORCE</a> &nbsp;·&nbsp; <a href="dqn.html">Next: DQN →</a></p>
+</main>
+
+<footer>built from the REINFORCE course · 100% client-side</footer>
+
+<script src="js/common.js"></script>
+<script src="js/actor-critic.js"></script>
+</body>
+</html>
