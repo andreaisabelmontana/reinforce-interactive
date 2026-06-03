@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Course Structure — AI: Reinforcement Learning</title>
+<meta name="description" content="The full syllabus-driven structure of the BCSAI Reinforcement Learning course: objectives, methodology, assessment, all 30 sessions with per-topic explanations and core RL formulas, a key-concepts glossary, and annotated bibliography — cross-linked to the interactive demos." />
+<link rel="stylesheet" href="assets/style.css" />
+<style>
+/* ---- course.html-specific layout, built on the shared design tokens ---- */
+.course-hero { text-align:center; padding:3rem 1rem 1.5rem; }
+.course-hero .tagline { font-family:var(--mono); color:var(--accent2); font-size:0.85rem;
+  text-transform:uppercase; letter-spacing:0.2em; margin-bottom:1rem; }
+.course-hero h1 { font-size:clamp(1.9rem,4.6vw,3rem); margin:0 0 0.8rem;
+  background:linear-gradient(135deg,var(--accent),var(--accent2) 60%,var(--accent3));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  font-weight:800; letter-spacing:-0.02em; }
+.course-hero p { color:var(--text-dim); font-size:1.08rem; max-width:780px; margin:0 auto; }
+
+/* sub-nav for section anchors */
+.subnav { position:sticky; top:49px; z-index:40;
+  background:rgba(10,14,26,0.9); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border); padding:0.5rem 1.5rem;
+  display:flex; gap:0.4rem 0.8rem; flex-wrap:wrap; font-size:0.8rem; }
+.subnav a { color:var(--text-dim); font-family:var(--mono); padding:0.2rem 0.5rem; border-radius:6px; }
+.subnav a:hover { color:var(--text); background:var(--bg-elev); }
+
+/* meta grid */
+.meta-grid { display:grid; gap:0.6rem; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); margin:1rem 0 0.5rem; }
+.meta-cell { background:var(--bg-elev); border:1px solid var(--border); border-radius:8px; padding:0.6rem 0.8rem; }
+.meta-cell .lbl { display:block; font-size:0.68rem; color:var(--text-dim); font-family:var(--mono);
+  text-transform:uppercase; letter-spacing:0.1em; }
+.meta-cell .v { display:block; font-size:0.98rem; font-weight:700; margin-top:0.2rem; color:var(--text); }
+
+/* percentage / weighting bars */
+.bar-row { display:grid; grid-template-columns:200px 1fr 56px; align-items:center; gap:0.8rem; margin:0.45rem 0; }
+.bar-row .name { font-size:0.85rem; color:var(--text); }
+.bar-track { background:var(--bg); border:1px solid var(--border); border-radius:999px; height:14px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.bar-row .pct { font-family:var(--mono); font-size:0.85rem; color:var(--accent2); text-align:right; }
+@media (max-width:600px){ .bar-row{ grid-template-columns:120px 1fr 46px; } }
+
+/* module block */
+.module { background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+  padding:1.25rem 1.4rem; margin:1.5rem 0; }
+.module > .mod-head { display:flex; align-items:baseline; gap:0.7rem; flex-wrap:wrap; }
+.module .mod-kicker { font-family:var(--mono); font-size:0.72rem; color:var(--accent);
+  text-transform:uppercase; letter-spacing:0.16em; }
+.module h3.mod-title { font-size:1.3rem; margin:0.1rem 0 0.4rem; }
+.module .mod-sessions { font-family:var(--mono); font-size:0.72rem; color:var(--text-dim); }
+.mod-outcomes { margin:0.4rem 0 0.4rem; }
+
+/* timeline of sessions */
+.timeline { position:relative; margin:1rem 0 0.2rem; padding-left:1.6rem; }
+.timeline::before { content:''; position:absolute; left:0.42rem; top:0.3rem; bottom:0.3rem;
+  width:2px; background:linear-gradient(180deg,var(--accent),var(--accent2)); opacity:0.4; }
+.session { position:relative; margin:0 0 1.3rem; }
+.session::before { content:''; position:absolute; left:-1.42rem; top:0.35rem;
+  width:11px; height:11px; border-radius:50%; background:var(--bg-card);
+  border:2px solid var(--accent); }
+.session.assign::before { background:var(--warn); border-color:var(--warn); }
+.session .s-head { display:flex; align-items:baseline; gap:0.55rem; flex-wrap:wrap; }
+.session .s-num { font-family:var(--mono); font-size:0.72rem; color:var(--accent2);
+  background:var(--bg-elev); border:1px solid var(--border); border-radius:5px; padding:0.05rem 0.4rem; }
+.session h4 { margin:0; font-size:1.02rem; }
+.session .s-badge { font-family:var(--mono); font-size:0.62rem; text-transform:uppercase; letter-spacing:0.08em;
+  padding:0.08rem 0.42rem; border-radius:4px; }
+.s-badge.assign { background:rgba(245,158,11,0.15); color:var(--warn); border:1px solid rgba(245,158,11,0.4); }
+.s-badge.group { background:rgba(45,212,191,0.13); color:var(--success); border:1px solid rgba(45,212,191,0.4); }
+.s-badge.exam { background:rgba(239,68,68,0.13); color:var(--danger); border:1px solid rgba(239,68,68,0.4); }
+.s-obj { color:var(--text-dim); font-size:0.9rem; margin:0.35rem 0 0.5rem; }
+.s-topics { margin:0.3rem 0; }
+.s-topics .t { margin:0.4rem 0; font-size:0.9rem; }
+.s-topics .t b { color:var(--text); }
+.s-reading { font-size:0.82rem; color:var(--text-dim); margin-top:0.45rem; font-family:var(--mono); }
+.s-reading b { color:var(--accent2); font-weight:600; }
+.demo-link { display:inline-block; font-family:var(--mono); font-size:0.72rem;
+  padding:0.12rem 0.5rem; border-radius:5px; background:var(--bg-elev); color:var(--accent2);
+  border:1px solid var(--border); margin:0.35rem 0.35rem 0 0; }
+.demo-link:hover { border-color:var(--accent); color:var(--text); }
+
+/* glossary */
+.glossary { display:grid; gap:0.7rem; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+.term { background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:0.7rem 0.9rem; }
+.term dt { font-weight:700; color:var(--accent2); font-size:0.92rem; margin-bottom:0.2rem; }
+.term dd { margin:0; color:var(--text-dim); font-size:0.85rem; }
+
+/* bibliography */
+.biblio { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:1rem 1.2rem; }
+.biblio .ref { margin:0.6rem 0; }
+.biblio .ref .cite { font-size:0.92rem; }
+.biblio .ref .annot { color:var(--text-dim); font-size:0.86rem; margin-top:0.25rem; }
+
+.pillrow { display:flex; flex-wrap:wrap; gap:0.4rem; margin:0.6rem 0; }
+.pill { font-family:var(--mono); font-size:0.72rem; padding:0.15rem 0.55rem; border-radius:999px;
+  background:var(--bg-elev); border:1px solid var(--border); color:var(--text-dim); }
+.math .lhs { color:var(--accent3); }
+.toc-cards a.card h3 { color:var(--text); }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="index.html">← Demos</a>
+  <a class="navlink active" href="course.html">Course&nbsp;Outline</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="dp.html">DP</a>
+  <a class="navlink" href="td.html">MC&nbsp;/&nbsp;TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="policy-gradient.html">REINFORCE</a>
+  <a class="navlink" href="actor-critic.html">Actor-Critic</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="multi-agent.html">Multi-Agent</a>
+  <a class="navlink" href="SYLLABUS.pdf" target="_blank" rel="noopener">SYLLABUS.pdf ↗</a>
+</nav>
+
+<div class="subnav">
+  <a href="#overview">Overview</a>
+  <a href="#objectives">Objectives</a>
+  <a href="#methodology">Methodology</a>
+  <a href="#assessment">Assessment</a>
+  <a href="#program">Program</a>
+  <a href="#concepts">Key&nbsp;Concepts</a>
+  <a href="#bibliography">Bibliography</a>
+</div>
+
+<main>
+
+  <section class="course-hero">
+    <div class="tagline">Course Structure · Syllabus-Driven</div>
+    <h1>AI: Reinforcement Learning</h1>
+    <p>The complete map of the course — from the exploration–exploitation dilemma of bandits to deep value learning, policy gradients, and multi-agent dynamics. Every one of the 30 sessions is laid out below with its objective, the concepts it covers, the core mathematics, and a link to the live demo that lets you watch the algorithm run.</p>
+    <div class="pillrow" style="justify-content:center;margin-top:1.2rem">
+      <span class="pill">BCSAI · Third year</span>
+      <span class="pill">6.0 ECTS</span>
+      <span class="pill">30 sessions</span>
+      <span class="pill">Semester 2 · 25–26</span>
+      <span class="pill">Compulsory</span>
+      <span class="pill">English</span>
+    </div>
+  </section>
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <h2 id="overview">Overview</h2>
+  <p class="muted">
+    Reinforcement Learning (RL) is, in the words of the course, a <em>melting pot</em> where the computational
+    techniques of dynamic programming, heuristic search in problem spaces, and the functional representation power
+    of neural networks have converged to build a highly scalable discipline — one that lets us efficiently attack a
+    wide range of problems previously considered practically unapproachable. An <strong>agent</strong> acts in an
+    <strong>environment</strong>; the environment returns a <strong>state</strong> and a <strong>reward</strong>; the
+    agent's job is to learn a <strong>policy</strong> <code>π(a|s)</code> that maximises the expected cumulative,
+    discounted return.
+  </p>
+
+  <div class="math">
+    <span class="lhs">G<sub>t</sub></span> = R<sub>t+1</sub> + γ R<sub>t+2</sub> + γ² R<sub>t+3</sub> + … = Σ<sub>k≥0</sub> γ<sup>k</sup> R<sub>t+k+1</sub>
+    &nbsp;&nbsp;— the discounted return; γ ∈ [0,1] trades off immediate vs. future reward.
+  </div>
+
+  <div class="meta-grid">
+    <div class="meta-cell"><span class="lbl">Course code</span><span class="v">AIRL-CSAI.3.M.A</span></div>
+    <div class="meta-cell"><span class="lbl">Area</span><span class="v">Computer Science</span></div>
+    <div class="meta-cell"><span class="lbl">Credits</span><span class="v">6.0 ECTS</span></div>
+    <div class="meta-cell"><span class="lbl">Sessions</span><span class="v">30 (live, in-person)</span></div>
+    <div class="meta-cell"><span class="lbl">Degree course</span><span class="v">Third</span></div>
+    <div class="meta-cell"><span class="lbl">Semester</span><span class="v">2nd · AY 25–26</span></div>
+    <div class="meta-cell"><span class="lbl">Category</span><span class="v">Compulsory</span></div>
+    <div class="meta-cell"><span class="lbl">Language</span><span class="v">English</span></div>
+    <div class="meta-cell"><span class="lbl">Professor</span><span class="v">José Manuel Rey González</span></div>
+    <div class="meta-cell"><span class="lbl">Contact</span><span class="v"><a href="mailto:jreyg@faculty.ie.edu">jreyg@faculty.ie.edu</a></span></div>
+    <div class="meta-cell"><span class="lbl">Workload</span><span class="v">150 h · 3–8 h/week</span></div>
+    <div class="meta-cell"><span class="lbl">Office hours</span><span class="v">On request (by email)</span></div>
+  </div>
+
+  <div class="note">
+    <strong>How this page maps to the demos.</strong> This is the course's structural companion. Wherever a session
+    introduces a technique that has an interactive visualisation in this repo, you'll find a
+    <a href="bandits.html" class="demo-link">demo&nbsp;link</a> — click through to run the algorithm yourself, tweak
+    parameters, and watch the update rule shown on this page take effect in real time. Nothing is precomputed; every
+    chart is a real algorithm running in your browser.
+  </div>
+
+  <!-- ===================== OBJECTIVES ===================== -->
+  <h2 id="objectives">Learning Objectives</h2>
+  <p>
+    The main objective is to introduce students to the field of RL and to set up a framework of knowledge that lets
+    them make informed analysis of the opportunities and challenges for its successful application in business. The
+    course aims for a sound understanding of RL techniques and their variations (model-free, model-based,
+    online/offline RL, behavioural cloning, …) and a good intuition for how to apply them to tasks of one's own design.
+    It encompasses knowledge about:
+  </p>
+  <div class="grid cards" style="margin-top:1rem">
+    <div class="card">
+      <span class="num">01</span>
+      <h3>Fundamentals &amp; theory</h3>
+      <p>The fundamentals and theoretical principles of the discipline — agents, environments, value, policy, the Bellman equations, and convergence.</p>
+    </div>
+    <div class="card">
+      <span class="num">02</span>
+      <h3>Relevant algorithms</h3>
+      <p>The most relevant algorithms used in practice — from tabular Q-value methods to Deep Q-Learning, policy gradients, actor-critic, and curiosity-driven approaches.</p>
+    </div>
+    <div class="card">
+      <span class="num">03</span>
+      <h3>Engineering process</h3>
+      <p>The engineering process for developing and managing RL projects: framing the problem, choosing a method, training, evaluation, and iteration.</p>
+    </div>
+    <div class="card">
+      <span class="num">04</span>
+      <h3>Difficulties &amp; challenges</h3>
+      <p>An understanding of the difficulties, obstacles, and challenges along the path — sample efficiency, stability, reward design, and deployment.</p>
+    </div>
+  </div>
+  <div class="callout">
+    The course deliberately combines a theoretical and conceptual approach with a hands-on technical understanding of
+    the different stages of an RL project, always keeping a clear perspective on the business issues and opportunities
+    and on the field's future evolution. Implementations concentrate on <strong>Python</strong> at a basic-to-intermediate
+    level of complexity; advanced examples may touch on environments such as LUA (robotics) or Matlab (process control)
+    for showcase purposes only.
+  </div>
+
+  <!-- ===================== METHODOLOGY ===================== -->
+  <h2 id="methodology">Teaching Methodology</h2>
+  <p>
+    IE University's teaching method is collaborative, active, and applied: students participate throughout the process
+    to build their knowledge and sharpen their skills, while the professor leads and guides toward the learning
+    objectives. The course is both lecture- and example-based, with frequent in-class group discussions. Knowledge
+    blocks are organised by integrating the conceptual/theoretical background first, then moving into
+    practice/tutorial examples, and finally framing assignments of assorted complexity. The course has six main
+    elements:
+  </p>
+  <div class="grid cards" style="margin-top:1rem">
+    <div class="card"><h3>Lectures</h3><p>Theoretical ideas, concepts, and methods, with on-time checks of understanding through questions and feedback.</p><span class="tag">interactive dialog</span></div>
+    <div class="card"><h3>Examples / Tutorials / Cases</h3><p>Cases and examples tied to the theory and preparatory for assignments; what-if interactive analysis is encouraged.</p><span class="tag">hands-on</span></div>
+    <div class="card"><h3>Discussions</h3><p>Group discussions on the relevant concepts of each section; some are announced in advance and require preparation.</p><span class="tag">presentation skill</span></div>
+    <div class="card"><h3>Assignments</h3><p>Practical exercises implementing RL algorithms in Python (Jupyter or pure scripts; occasionally numba/cython for speed) and analysing results.</p><span class="tag">implement · experiment</span></div>
+    <div class="card"><h3>Exams</h3><p>One formal test/exam, plus a series of "test-exam" practice assignments that simulate an open-book exam to build fluency.</p><span class="tag">test-exam practice</span></div>
+    <div class="card"><h3>Group work</h3><p>A small-group final project presentation in the final part of the course.</p><span class="tag">final project</span></div>
+  </div>
+
+  <h3>Effort distribution (150 hours total)</h3>
+  <p class="muted">The learning-activity weighting reflects how a student is expected to spend the 150 hours of the 6-ECTS workload.</p>
+  <div style="margin:0.8rem 0 0.4rem">
+    <div class="bar-row"><span class="name">Lectures</span><span class="bar-track"><span class="bar-fill" style="width:16.7%"></span></span><span class="pct">16.7%</span></div>
+    <div class="bar-row"><span class="name">Discussions</span><span class="bar-track"><span class="bar-fill" style="width:6.7%"></span></span><span class="pct">6.7%</span></div>
+    <div class="bar-row"><span class="name">Exercises / async / field</span><span class="bar-track"><span class="bar-fill" style="width:53.3%"></span></span><span class="pct">53.3%</span></div>
+    <div class="bar-row"><span class="name">Group work</span><span class="bar-track"><span class="bar-fill" style="width:10%"></span></span><span class="pct">10.0%</span></div>
+    <div class="bar-row"><span class="name">Individual studying</span><span class="bar-track"><span class="bar-fill" style="width:13.3%"></span></span><span class="pct">13.3%</span></div>
+  </div>
+  <table class="kv" style="margin-top:0.8rem">
+    <tr><td>Lectures</td><td>25.0 h</td></tr>
+    <tr><td>Discussions</td><td>10.0 h</td></tr>
+    <tr><td>Exercises in class, asynchronous sessions, field work</td><td>80.0 h</td></tr>
+    <tr><td>Group work</td><td>15.0 h</td></tr>
+    <tr><td>Individual studying</td><td>20.0 h</td></tr>
+    <tr><td><b>Total</b></td><td><b>150.0 h</b></td></tr>
+  </table>
+
+  <div class="note" style="margin-top:1.2rem">
+    <strong>GenAI policy.</strong> Generative-AI tools may be used for research, ideation, outlining, proofreading,
+    coding, diagrams, and image generation <em>with appropriate acknowledgement</em>. GenAI may be used for assignments
+    and exam preparation but <strong>not during the final exam</strong>. Students are responsible for validating any AI
+    outputs; using AI must always be acknowledged (a suggested disclosure format is provided in the syllabus).
+  </div>
+
+  <!-- ===================== ASSESSMENT ===================== -->
+  <h2 id="assessment">Assessment &amp; Evaluation</h2>
+  <p>
+    Roughly one third of the grade rewards <strong>attendance/participation</strong>, one third the
+    <strong>individual assignments</strong>, and the final third the <strong>group work and presentation</strong> plus
+    the test/exam. The official weighting is:
+  </p>
+  <div style="margin:0.8rem 0 0.4rem">
+    <div class="bar-row"><span class="name">Final Exam</span><span class="bar-track"><span class="bar-fill" style="width:30%"></span></span><span class="pct">30%</span></div>
+    <div class="bar-row"><span class="name">Individual Assignments</span><span class="bar-track"><span class="bar-fill" style="width:30%"></span></span><span class="pct">30%</span></div>
+    <div class="bar-row"><span class="name">Participation</span><span class="bar-track"><span class="bar-fill" style="width:20%"></span></span><span class="pct">20%</span></div>
+    <div class="bar-row"><span class="name">Group Assignment</span><span class="bar-track"><span class="bar-fill" style="width:10%"></span></span><span class="pct">10%</span></div>
+    <div class="bar-row"><span class="name">Group Presentation</span><span class="bar-track"><span class="bar-fill" style="width:10%"></span></span><span class="pct">10%</span></div>
+  </div>
+  <p class="muted" style="font-size:0.84rem">Note: the ongoing-grading scoring matrix in the syllabus distributes session points across Participation (20%), Individual Assignment (30%), Group Assignment (20%), and Test/Exam (30%) of the continuous-evaluation total; the criteria table above states the headline grade weights.</p>
+
+  <div class="grid cards" style="margin-top:1rem">
+    <div class="card">
+      <span class="num">30%</span>
+      <h3>Final Exam</h3>
+      <p>One formal test/exam. Most questions are drawn from the practice "test-exams" done during the course. GenAI is not allowed during the final exam.</p>
+      <span class="tag">closed · individual</span>
+    </div>
+    <div class="card">
+      <span class="num">30%</span>
+      <h3>Individual Assignments</h3>
+      <p>Implement RL algorithms in Python and analyse results. Delivered jointly in dynamically-formed small groups (no two students paired twice); collaboration enforced within the group only.</p>
+      <span class="tag">implement · analyse</span>
+    </div>
+    <div class="card">
+      <span class="num">20%</span>
+      <h3>Participation</h3>
+      <p>Come prepared as to a company meeting. Direct interaction, in-class group discussions, and inquisitive engagement across the 30 sessions.</p>
+      <span class="tag">come prepared</span>
+    </div>
+    <div class="card">
+      <span class="num">10%</span>
+      <h3>Group Assignment</h3>
+      <p>Final group project work, with groups optimised from student-informed preferences for the final assignment.</p>
+      <span class="tag">final project</span>
+    </div>
+    <div class="card">
+      <span class="num">10%</span>
+      <h3>Group Presentation</h3>
+      <p>Presentation, discussion, and Q&amp;A of the group project in the closing sessions (29–30).</p>
+      <span class="tag">present · defend</span>
+    </div>
+  </div>
+
+  <h3>Attendance, passing &amp; re-sit rules</h3>
+  <ul class="ck">
+    <li><b>Attendance.</b> Students are expected to attend all lectures and tutorials — material covered in class is not always in the readings. The <b>80% attendance rule</b> is binding.</li>
+    <li><b>Test-exam.</b> The Session-28 test-exam is a concept-summary review, <em>not</em> a final exam; it adds to the rest of the items and has no minimum passing grade.</li>
+    <li><b>Four calls.</b> Each student has four chances to pass a course over two consecutive academic years (ordinary + extraordinary June/July re-sits).</li>
+    <li><b>Attendance failure.</b> Students who do not comply with the 80% rule fail both calls for the year and must re-enrol the next academic year — with no re-sit opportunity.</li>
+    <li><b>Re-sit (June/July).</b> A single comprehensive exam, in-person at the enrolled campus (Segovia or Madrid). The final grade depends on this exam only; continuous evaluation is not counted. Pass mark <b>5</b>, maximum <b>8.0</b> ("notable").</li>
+    <li><b>Retakers (3rd call).</b> Must check the assigned professor's syllabus and contact them about specific criteria; maximum grade <b>10.0</b>.</li>
+    <li><b>Review session.</b> Grade appeals require having attended the post-exam review session.</li>
+    <li><b>Program rule.</b> Failing more than 18 ECTS in the year after the June/July re-sits leads to being asked to leave the program.</li>
+  </ul>
+
+  <!-- ===================== PROGRAM ===================== -->
+  <h2 id="program">Program — All 30 Sessions</h2>
+  <p class="muted">
+    The program is organised here into <strong>eight thematic modules</strong> that group the 30 sessions by the arc of
+    the field: foundations → tabular planning &amp; learning → integration &amp; evolution → frameworks → approximation
+    &amp; deep policy methods → advanced paradigms → frontiers &amp; applications → assessment. Sessions flagged
+    <span class="s-badge assign">assignment</span>, <span class="s-badge group">group</span>, or
+    <span class="s-badge exam">exam</span> mark deliverables. The disclaimer in the syllabus applies: the coverage is
+    tentative and pace adapts to the group.
+  </p>
+
+  <!-- MODULE 1 -->
+  <div class="module" id="m1">
+    <div class="mod-head">
+      <span class="mod-kicker">Module 1</span>
+      <span class="mod-sessions">Sessions 1–4</span>
+    </div>
+    <h3 class="mod-title">Foundations: Agents, Feedback &amp; Bandits</h3>
+    <p class="muted">What RL is, where it came from, what an intelligent agent is, and the simplest setting where learning-from-reward already bites: the multi-armed bandit. This module builds the vocabulary the rest of the course leans on.</p>
+    <div class="callout mod-outcomes"><strong>Module learning outcomes.</strong> Articulate the agent–environment loop and the difference between evaluative and instructive feedback; explain the historical convergence of control, search, and learning into modern RL; formalise and solve a bandit problem balancing exploration and exploitation.</div>
+
+    <div class="timeline">
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S01</span><h4>Introduction to the Course (Syllabus)</h4></div>
+        <p class="s-obj"><b>Objective:</b> motivate procedural learning and RL, and survey the contents, approaches, and the relevant issues in the field.</p>
+        <div class="s-topics">
+          <div class="t"><b>Procedural learning &amp; RL motivation —</b> why learning by trial-and-error with delayed, evaluative reward is a distinct paradigm from supervised and unsupervised learning.</div>
+          <div class="t"><b>Overview &amp; issues —</b> a map of the course and the recurring tensions (exploration vs. exploitation, bias vs. variance, sample efficiency vs. stability) that will return throughout.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> RL optimises behaviour from a scalar reward signal alone — there are no labelled "correct actions", only consequences to be maximised over time.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S02</span><h4>RL Introduction</h4></div>
+        <p class="s-obj"><b>Objective:</b> identify the building blocks of current RL algorithms and the convergent routes that produced them.</p>
+        <div class="s-topics">
+          <div class="t"><b>Building blocks —</b> policy, reward signal, value function, and (optionally) a model of the environment.</div>
+          <div class="t"><b>Convergent routes —</b> how Model Predictive Control, Markov chains, dynamic programming, heuristic search, and genetic algorithms all flow into modern RL.</div>
+        </div>
+        <div class="math"><span class="lhs">v<sub>π</sub>(s)</span> = E<sub>π</sub>[ G<sub>t</sub> | S<sub>t</sub> = s ]&nbsp;&nbsp;— the state-value function: expected return from <em>s</em> under policy π.</div>
+        <div class="callout"><b>Key idea.</b> Value is "reward foresight": a state is good not for its immediate reward but for the stream of reward it leads to.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 1 §1.7 — Early history of Reinforcement Learning.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S03</span><h4>RL Basic Concepts</h4></div>
+        <p class="s-obj"><b>Objective:</b> define intelligent agents and their types, and distinguish the feedback regimes RL operates under.</p>
+        <div class="s-topics">
+          <div class="t"><b>Intelligent agents &amp; types —</b> reflex, model-based, goal-based, utility-based, and learning agents.</div>
+          <div class="t"><b>Evaluative vs. instructive feedback —</b> evaluative tells you <em>how good</em> the action was (RL); instructive tells you the <em>correct</em> action regardless of what you did (supervised).</div>
+          <div class="t"><b>Associative vs. non-associative —</b> whether the best action depends on the situation (associative / contextual) or not (the plain bandit).</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> Evaluative feedback is what forces exploration: you can only judge an action relative to others by trying them.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 1 §1.3 — Elements of Reinforcement Learning.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S04</span><h4>Multi-Armed Bandits</h4></div>
+        <p class="s-obj"><b>Objective:</b> introduce (contextual) bandits as the basis for full RL and as immediately useful business tools.</p>
+        <div class="s-topics">
+          <div class="t"><b>The k-armed bandit —</b> estimate action values Q(a) and balance exploiting the current best against exploring uncertain arms; ε-greedy, UCB, Thompson sampling, and gradient bandits.</div>
+          <div class="t"><b>Contextual bandits —</b> action value conditioned on a context — the bridge from bandits to states-and-policies.</div>
+          <div class="t"><b>Business "low-hanging fruit" —</b> A/B testing, ad selection, recommendation, and pricing as direct bandit applications.</div>
+        </div>
+        <div class="math"><span class="lhs">Q<sub>n+1</sub>(a)</span> = Q<sub>n</sub>(a) + α [ R<sub>n</sub> − Q<sub>n</sub>(a) ]&nbsp;&nbsp;·&nbsp;&nbsp;UCB: a<sub>t</sub> = argmax<sub>a</sub> [ Q(a) + c √(ln t / N(a)) ]</div>
+        <div class="callout"><b>Key idea.</b> Exploration is not waste — the √(ln t / N(a)) bonus shows that uncertainty itself has option value worth paying for.</div>
+        <a href="bandits.html" class="demo-link">▶ Demo: Multi-Armed Bandits</a>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 2 — Tabular Solution Methods: Multi-armed bandits.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODULE 2 -->
+  <div class="module" id="m2">
+    <div class="mod-head">
+      <span class="mod-kicker">Module 2</span>
+      <span class="mod-sessions">Sessions 5–9</span>
+    </div>
+    <h3 class="mod-title">Tabular Worlds: MDPs, Dynamic Programming, Monte Carlo &amp; TD</h3>
+    <p class="muted">The theoretical heart of the course. We formalise the environment as a Markov Decision Process, solve it exactly with dynamic programming when the model is known, and then learn from experience alone with Monte Carlo and temporal-difference methods.</p>
+    <div class="callout mod-outcomes"><strong>Module learning outcomes.</strong> Formalise a problem as a finite MDP; write and apply the Bellman expectation and optimality equations; run value iteration and policy iteration; contrast Monte Carlo and TD estimation and explain bootstrapping, on-policy vs. off-policy, and the role of importance sampling.</div>
+
+    <div class="timeline">
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S05</span><h4>Graphs, Search, MDPs</h4></div>
+        <p class="s-obj"><b>Objective:</b> understand the search space and its representation, the dimensions of heuristic search for prediction and control, and introduce Markov Decision Processes.</p>
+        <div class="s-topics">
+          <div class="t"><b>Search spaces &amp; heuristics —</b> states as nodes, actions as edges; how informed search relates to value-based control.</div>
+          <div class="t"><b>Markov Decision Processes —</b> the tuple ⟨S, A, P, R, γ⟩ and the Markov property: the future depends only on the present state, not the path taken.</div>
+        </div>
+        <div class="math"><span class="lhs">v<sub>π</sub>(s)</span> = Σ<sub>a</sub> π(a|s) Σ<sub>s′,r</sub> p(s′,r | s,a) [ r + γ v<sub>π</sub>(s′) ]&nbsp;&nbsp;— the Bellman <em>expectation</em> equation.</div>
+        <div class="callout"><b>Key idea.</b> The Markov property is what makes value functions well-defined and recursive — the present state is a sufficient statistic of history.</div>
+        <a href="mdp.html" class="demo-link">▶ Demo: MDPs &amp; Gridworld</a>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 3 — Finite Markov Decision Processes.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S06</span><h4>Review Practice — MDPs</h4></div>
+        <p class="s-obj"><b>Objective:</b> review and apply MDP concepts on practical cases, including analytical solutions for simple problems.</p>
+        <div class="s-topics">
+          <div class="t"><b>Practical MDP cases —</b> intuition-building and closed-form solutions for small, tractable MDPs.</div>
+          <div class="t"><b>Backup diagrams —</b> the standard technique for representing how value flows from successor states back to the current one.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> A backup diagram is the picture of a Bellman equation — reading it left-to-right is exactly one update.</div>
+        <a href="mdp.html" class="demo-link">▶ Demo: MDPs &amp; Gridworld</a>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S07</span><h4>Dynamic Programming</h4></div>
+        <p class="s-obj"><b>Objective:</b> solve known MDPs exactly using the iterative value function and Generalized Policy Iteration.</p>
+        <div class="s-topics">
+          <div class="t"><b>Value iteration —</b> repeatedly apply the Bellman optimality update until v converges to v*.</div>
+          <div class="t"><b>Policy iteration —</b> alternate full policy evaluation with greedy policy improvement.</div>
+          <div class="t"><b>Generalized Policy Iteration (GPI) —</b> the unifying view: evaluation and improvement chasing each other to a fixed point.</div>
+        </div>
+        <div class="math"><span class="lhs">v<sub>k+1</sub>(s)</span> = max<sub>a</sub> Σ<sub>s′,r</sub> p(s′,r | s,a) [ r + γ v<sub>k</sub>(s′) ]&nbsp;&nbsp;— the Bellman <em>optimality</em> backup (value iteration).</div>
+        <div class="callout"><b>Key idea.</b> DP needs a perfect model and sweeps every state — it is the gold-standard <em>planner</em> that all model-free learners try to approximate from samples.</div>
+        <a href="dp.html" class="demo-link">▶ Demo: Dynamic Programming</a>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 4 — Dynamic Programming.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S08</span><h4>Monte Carlo Methods</h4></div>
+        <p class="s-obj"><b>Objective:</b> learn values from complete episodes without a model, and master importance sampling.</p>
+        <div class="s-topics">
+          <div class="t"><b>Monte Carlo estimation —</b> average the actual returns observed after visiting a state; no bootstrapping, learns only from finished episodes.</div>
+          <div class="t"><b>Importance sampling —</b> reweight returns generated under a behaviour policy to estimate values under a target policy — the engine of off-policy learning.</div>
+          <div class="t"><b>Merging with DP —</b> how MC and DP combine as two ends of the bias–variance spectrum.</div>
+        </div>
+        <div class="math"><span class="lhs">V(S<sub>t</sub>)</span> ← V(S<sub>t</sub>) + α [ G<sub>t</sub> − V(S<sub>t</sub>) ]&nbsp;&nbsp;·&nbsp;&nbsp;IS ratio ρ = Π<sub>k</sub> π(A<sub>k</sub>|S<sub>k</sub>) / b(A<sub>k</sub>|S<sub>k</sub>)</div>
+        <div class="callout"><b>Key idea.</b> MC is unbiased but high-variance: it waits for the true return G<sub>t</sub> instead of guessing it — the opposite trade-off to TD.</div>
+        <a href="td.html" class="demo-link">▶ Demo: Monte Carlo &amp; TD</a>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 5 — Monte Carlo Methods; Importance Sampling.</div>
+      </div>
+
+      <div class="session assign">
+        <div class="s-head"><span class="s-num">S09</span><h4>Temporal Differences</h4><span class="s-badge assign">assignment</span></div>
+        <p class="s-obj"><b>Objective:</b> integrate the prior concepts into the cornerstone of RL for finite-MDP-like problems; work the Bellman optimality equation through TD control.</p>
+        <div class="s-topics">
+          <div class="t"><b>TD(0) prediction —</b> bootstrap: update toward an estimate (r + γV(s′)) rather than the full return.</div>
+          <div class="t"><b>SARSA (on-policy) &amp; Q-learning (off-policy) —</b> the two canonical TD control algorithms; Expected SARSA as the lower-variance middle ground.</div>
+          <div class="t"><b>TD(λ) &amp; n-step bootstrapping —</b> eligibility traces interpolate smoothly between TD(0) and Monte Carlo.</div>
+        </div>
+        <div class="math"><span class="lhs">Q(s,a)</span> ← Q(s,a) + α [ r + γ max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]&nbsp;&nbsp;— the Q-learning update (off-policy TD control).</div>
+        <div class="math"><span class="lhs">TD(λ):</span>&nbsp; δ<sub>t</sub> = r<sub>t+1</sub> + γV(s<sub>t+1</sub>) − V(s<sub>t</sub>);&nbsp; e<sub>t</sub>(s) = γλ e<sub>t−1</sub>(s) + 𝟙[s=s<sub>t</sub>];&nbsp; V(s) ← V(s) + α δ<sub>t</sub> e<sub>t</sub>(s)</div>
+        <div class="callout"><b>Key idea.</b> Bootstrapping trades variance for bias — TD can learn online, step-by-step, from incomplete episodes, which is why it is the workhorse of practical RL.</div>
+        <a href="td.html" class="demo-link">▶ Demo: SARSA / Q-Learning (Cliff Walking)</a>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 6 — Temporal-Difference Learning; Ch. 7 — n-step Bootstrapping.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODULE 3 -->
+  <div class="module" id="m3">
+    <div class="mod-head">
+      <span class="mod-kicker">Module 3</span>
+      <span class="mod-sessions">Sessions 10–12</span>
+    </div>
+    <h3 class="mod-title">Integration, Planning &amp; Evolutionary Computation</h3>
+    <p class="muted">Putting the tabular toolkit to work on a real problem, comparing model-based and model-free learning, and stepping sideways into gradient-free optimisation — genetic algorithms, Pareto optimality, and neuro-evolution.</p>
+    <div class="callout mod-outcomes"><strong>Module learning outcomes.</strong> Solve an integrated problem with RL and justify the choice against alternatives; distinguish model-based planning from model-free learning; explain genetic algorithms, multi-objective/Pareto optimisation, and NEAT, and how neuro-evolution relates to mainstream RL.</div>
+
+    <div class="timeline">
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S10</span><h4>A First Practice — Integration of Concepts</h4></div>
+        <p class="s-obj"><b>Objective:</b> apply the studied principles to an initial problem and compare RL against alternative solutions.</p>
+        <div class="s-topics">
+          <div class="t"><b>Comparative solutions —</b> hardcoded heuristics, genetic algorithms, Hamiltonian paths vs. an RL approach; live charting of each.</div>
+          <div class="t"><b>Rationale for RL —</b> when and why a learned policy beats a hand-engineered or search-based solution.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> RL is not always the answer — the discipline is choosing it when the problem has delayed reward, large state spaces, and no good model.</div>
+        <a href="td.html" class="demo-link">▶ Demo: MC / TD</a>
+        <a href="dp.html" class="demo-link">▶ Demo: DP</a>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S11</span><h4>Learning and Planning</h4></div>
+        <p class="s-obj"><b>Objective:</b> compare in depth the characteristics and differences of model-based vs. model-free methods.</p>
+        <div class="s-topics">
+          <div class="t"><b>Planning with a model —</b> using a learned or given model to simulate experience (e.g. Dyna-style integration of planning, acting, and learning).</div>
+          <div class="t"><b>Model-free learning —</b> learning directly from real experience without ever building a transition model.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> A model multiplies the value of every real sample by letting you "imagine" more — at the risk of compounding model error.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 8 — Planning &amp; Learning with Tabular Methods.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S12</span><h4>Evolutionary Computation</h4></div>
+        <p class="s-obj"><b>Objective:</b> explore genetic algorithms and beyond — non-dominated multi-objective optimisation, the Pareto frontier, and NEAT.</p>
+        <div class="s-topics">
+          <div class="t"><b>Genetic algorithms —</b> populations of candidate policies evolved by selection, crossover, and mutation; gradient-free black-box optimisation.</div>
+          <div class="t"><b>Pareto frontier —</b> non-dominated solutions in multi-objective problems where no objective can improve without hurting another.</div>
+          <div class="t"><b>Neuro-Evolution / NEAT —</b> evolving the weights <em>and topology</em> of neural-network policies, and links to mainstream RL.</div>
+        </div>
+        <div class="math"><span class="lhs">x* ∈ Pareto</span> ⇔ ∄ x : (∀i fᵢ(x) ≥ fᵢ(x*)) ∧ (∃j fⱼ(x) &gt; fⱼ(x*))&nbsp;&nbsp;— non-dominance.</div>
+        <div class="callout"><b>Key idea.</b> Evolution needs no gradient and no Markov assumption — it optimises whole policies by survival, which can succeed where backprop-through-reward struggles.</div>
+        <a href="evolution.html" class="demo-link">▶ Demo: Evolutionary Methods</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODULE 4 -->
+  <div class="module" id="m4">
+    <div class="mod-head">
+      <span class="mod-kicker">Module 4</span>
+      <span class="mod-sessions">Sessions 13–14</span>
+    </div>
+    <h3 class="mod-title">Tooling: RL Frameworks &amp; Intermediate Practice</h3>
+    <p class="muted">The practical engineering layer — the libraries practitioners actually use, and a comparative training practice across algorithmic methods.</p>
+    <div class="callout mod-outcomes"><strong>Module learning outcomes.</strong> Compare major RL frameworks and select one for a task; set up a training/evaluation loop and compare algorithmic methods empirically.</div>
+
+    <div class="timeline">
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S13</span><h4>RL Frameworks</h4></div>
+        <p class="s-obj"><b>Objective:</b> survey and compare the main RL frameworks in current use.</p>
+        <div class="s-topics">
+          <div class="t"><b>Environment &amp; algorithm libraries —</b> OpenAI Gym/Gymnasium (environments), Stable-Baselines (algorithms), Ray/RLlib (scalable distributed training).</div>
+          <div class="t"><b>Pros, cons &amp; requisites —</b> when each framework is the right choice and what it demands of your problem.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> A standard environment interface (reset / step → state, reward, done) is what lets one algorithm be dropped onto a thousand problems.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S14</span><h4>Intermediate Practice</h4></div>
+        <p class="s-obj"><b>Objective:</b> analyse and compare different algorithmic methods for training these models.</p>
+        <div class="s-topics">
+          <div class="t"><b>Empirical comparison —</b> running several algorithms on the same task and reading learning curves, sample efficiency, and stability.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> In RL, the "best" algorithm is task-dependent — comparison on the actual problem beats reputation.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODULE 5 -->
+  <div class="module" id="m5">
+    <div class="mod-head">
+      <span class="mod-kicker">Module 5</span>
+      <span class="mod-sessions">Sessions 15–18</span>
+    </div>
+    <h3 class="mod-title">Function Approximation &amp; Deep Policy Methods</h3>
+    <p class="muted">Where RL goes deep. When state spaces are too large to tabulate, we approximate value and policy functions — with neural networks — and learn the policy directly via policy gradients and actor-critic.</p>
+    <div class="callout mod-outcomes"><strong>Module learning outcomes.</strong> Explain why tabular methods fail to scale and how function approximation generalises; state the policy gradient theorem and implement REINFORCE; describe actor-critic and the advantage function; critique sample solutions and diagnose common training failures.</div>
+
+    <div class="timeline">
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S15</span><h4>Approximation Methods</h4></div>
+        <p class="s-obj"><b>Objective:</b> make the key strategic shift to approximating value, q(s,a), or policy functions — with a focus on ANN approximators.</p>
+        <div class="s-topics">
+          <div class="t"><b>Why approximate —</b> tabular storage and learning are infeasible for large or continuous state spaces; approximation buys generalisation across similar states.</div>
+          <div class="t"><b>Feature representations —</b> tile coding, RBFs, polynomial features, and learned neural features.</div>
+          <div class="t"><b>Eligibility traces with approximation —</b> extending TD(λ) into the function-approximation setting.</div>
+        </div>
+        <div class="math"><span class="lhs">w</span> ← w + α [ U<sub>t</sub> − v̂(S<sub>t</sub>,w) ] ∇<sub>w</sub> v̂(S<sub>t</sub>,w)&nbsp;&nbsp;— semi-gradient value-function update.</div>
+        <div class="callout"><b>Key idea.</b> Generalisation is double-edged: updating one state's value changes others — the "deadly triad" (bootstrapping + off-policy + approximation) can diverge.</div>
+        <a href="function-approx.html" class="demo-link">▶ Demo: Function Approximation</a>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 9 §9.7 (Nonlinear/ANN approximation), Ch. 10, 11, 12 (Eligibility traces).</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S16</span><h4>Policy Gradients</h4></div>
+        <p class="s-obj"><b>Objective:</b> learn the theory behind policy-gradient methods and the Policy Gradient Theorem.</p>
+        <div class="s-topics">
+          <div class="t"><b>Parameterised policies —</b> represent π(a|s,θ) directly and optimise θ to maximise expected return J(θ).</div>
+          <div class="t"><b>Policy Gradient Theorem —</b> the gradient of return can be written without differentiating the environment dynamics.</div>
+          <div class="t"><b>REINFORCE —</b> Monte Carlo policy gradient: scale ∇log π by the observed return.</div>
+        </div>
+        <div class="math"><span class="lhs">∇<sub>θ</sub>J(θ)</span> = E<sub>π</sub>[ ∇<sub>θ</sub> log π(a|s,θ) · G<sub>t</sub> ]&nbsp;&nbsp;— the policy gradient theorem (REINFORCE estimator).</div>
+        <div class="callout"><b>Key idea.</b> Push up the log-probability of actions that led to high return and down those that didn't — no value function strictly required, but variance is high.</div>
+        <a href="policy-gradient.html" class="demo-link">▶ Demo: Policy Gradients (REINFORCE)</a>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 13 — Policy Gradient Methods.</div>
+      </div>
+
+      <div class="session assign">
+        <div class="s-head"><span class="s-num">S17</span><h4>Actor-Critic</h4><span class="s-badge assign">assignment</span></div>
+        <p class="s-obj"><b>Objective:</b> define and analyse actor-critic methods, the concept of advantage, and the main algorithms.</p>
+        <div class="s-topics">
+          <div class="t"><b>Actor + critic —</b> the actor (policy) chooses actions; the critic (value function) evaluates them and provides a low-variance learning signal.</div>
+          <div class="t"><b>Advantage —</b> A(s,a) = Q(s,a) − V(s): how much better an action is than the state's average; subtracting the baseline V(s) cuts variance without adding bias.</div>
+          <div class="t"><b>Main algorithms —</b> A2C/A3C and pointers to PPO as the modern, stable successor.</div>
+        </div>
+        <div class="math"><span class="lhs">θ</span> ← θ + α ∇<sub>θ</sub> log π(a|s,θ) · Â,&nbsp;&nbsp;with&nbsp; Â = r + γV(s′) − V(s)&nbsp;&nbsp;— A2C advantage update.</div>
+        <div class="callout"><b>Key idea.</b> The critic turns REINFORCE's noisy full-episode return into a one-step bootstrap estimate — dramatically lower variance, faster learning.</div>
+        <a href="actor-critic.html" class="demo-link">▶ Demo: Actor-Critic (A2C)</a>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 13 §13.5 — Actor-Critic methods.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S18</span><h4>Practice Review</h4></div>
+        <p class="s-obj"><b>Objective:</b> dissect and discuss sample solutions and explore the main difficulties.</p>
+        <div class="s-topics">
+          <div class="t"><b>Solution dissection —</b> reading others' implementations to internalise good structure and common pitfalls.</div>
+          <div class="t"><b>Main difficulties —</b> instability, hyperparameter sensitivity, reward scaling, and debugging silent failures.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> Most RL "bugs" are not crashes — they are agents that learn the wrong thing; reading curves and reward signals is a core skill.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODULE 6 -->
+  <div class="module" id="m6">
+    <div class="mod-head">
+      <span class="mod-kicker">Module 6</span>
+      <span class="mod-sessions">Sessions 19–22</span>
+    </div>
+    <h3 class="mod-title">Advanced Paradigms: Problem Framing, Model-Based &amp; Deep RL</h3>
+    <p class="muted">Choosing the right solution method for a hard classical problem, then the advanced families — model-based, offline, and inverse RL — culminating in a deep-RL practice on an image-based game and a recap toward Rainbow-style methods.</p>
+    <div class="callout mod-outcomes"><strong>Module learning outcomes.</strong> Frame a hard combinatorial problem across solution families; explain model-based, offline, and inverse RL and their relation to imitation learning; connect deep value learning (DQN) to function approximation and apply it to a pixel-based task.</div>
+
+    <div class="timeline">
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S19</span><h4>Problem Approach Framework</h4></div>
+        <p class="s-obj"><b>Objective:</b> exhaustively analyse a classical problem (the Travelling Salesman Problem) across every line of solution.</p>
+        <div class="s-topics">
+          <div class="t"><b>Solution families —</b> Christofides' approximation, genetic algorithms, ant-colony optimisation, and simple-to-complex RL.</div>
+          <div class="t"><b>"When, why, how" —</b> initial framework for deciding which approach fits which problem and constraints.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> The skill is meta: matching a problem's structure (combinatorial, sequential, stochastic) to the cheapest method that solves it well enough.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S20</span><h4>Model-Based, Off-line, Inverse RL</h4></div>
+        <p class="s-obj"><b>Objective:</b> introduce inverse RL and connect it to behavioural cloning, imitation learning, and teacher agents.</p>
+        <div class="s-topics">
+          <div class="t"><b>Model-based RL —</b> learning a dynamics model and planning within it.</div>
+          <div class="t"><b>Offline RL —</b> learning a policy purely from a fixed dataset, with no further environment interaction.</div>
+          <div class="t"><b>Inverse RL —</b> inferring an agent's reward/objectives by observing its behaviour; links to behavioural cloning and imitation learning.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> Inverse RL flips the problem — instead of "given rewards, find behaviour", it asks "given behaviour, recover the rewards" — the basis for learning from demonstration.</div>
+      </div>
+
+      <div class="session assign">
+        <div class="s-head"><span class="s-num">S21</span><h4>Deep RL Practice</h4><span class="s-badge assign">assignment</span></div>
+        <p class="s-obj"><b>Objective:</b> connect RL and ANN approximation by applying deep RL to an image-based game-learning problem and comparing results.</p>
+        <div class="s-topics">
+          <div class="t"><b>Deep Q-Networks (DQN) —</b> a neural Q-function over raw (e.g. pixel) state, stabilised by an experience replay buffer, a periodically-updated target network, and ε-decay.</div>
+          <div class="t"><b>From pixels to policy —</b> the trio of tricks that made Atari-from-pixels work.</div>
+        </div>
+        <div class="math"><span class="lhs">L(θ)</span> = E[ ( r + γ max<sub>a′</sub> Q(s′,a′; θ⁻) − Q(s,a; θ) )² ]&nbsp;&nbsp;— DQN loss; θ⁻ is the frozen target network.</div>
+        <div class="callout"><b>Key idea.</b> Replay decorrelates samples and the target network stops the regression "chasing its own tail" — the two fixes that tamed the deadly triad enough to learn from pixels.</div>
+        <a href="dqn.html" class="demo-link">▶ Demo: Deep Q-Networks</a>
+        <a href="function-approx.html" class="demo-link">▶ Demo: Function Approximation</a>
+      </div>
+
+      <div class="session group">
+        <div class="s-head"><span class="s-num">S22</span><h4>Summary Recap</h4><span class="s-badge group">group</span></div>
+        <p class="s-obj"><b>Objective:</b> recap all concepts and algorithms so far and extend toward new ones.</p>
+        <div class="s-topics">
+          <div class="t"><b>Consolidation —</b> tying together bandits → MDPs → DP → MC/TD → approximation → policy methods → deep RL.</div>
+          <div class="t"><b>Rainbow algorithms —</b> introductory extension to combined improvements (Double DQN, Dueling, Prioritised Replay, Distributional, Noisy Nets, n-step).</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> Rainbow shows the modern pattern — strong agents are usually a careful combination of several orthogonal improvements, not one silver bullet.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODULE 7 -->
+  <div class="module" id="m7">
+    <div class="mod-head">
+      <span class="mod-kicker">Module 7</span>
+      <span class="mod-sessions">Sessions 23–27</span>
+    </div>
+    <h3 class="mod-title">Frontiers, Applications &amp; Multi-Agent RL</h3>
+    <p class="muted">The research edge and the real world — recent papers and innovation trends, business applications across industries, multi-agent dynamics, and the landmark breakthroughs and companies that define the field.</p>
+    <div class="callout mod-outcomes"><strong>Module learning outcomes.</strong> Read and discuss recent RL research; identify obstacles to real-world deployment; explain multi-agent RL dynamics; map flagship applications (AlphaGo, AlphaFold-2, fusion control) to the techniques behind them.</div>
+
+    <div class="timeline">
+
+      <div class="session exam">
+        <div class="s-head"><span class="s-num">S23</span><h4>Research Papers, Innovation Trends (A)</h4><span class="s-badge exam">exam practice</span></div>
+        <p class="s-obj"><b>Objective:</b> study and discuss landmark RL papers and summarise new approaches. <em>(Examination practice: be prepared to answer questions about RL.)</em></p>
+        <div class="s-topics">
+          <div class="t"><b>New approaches —</b> reward shaping, finite-automata / reward-machine rewards, and hierarchical RL (options, sub-goals).</div>
+          <div class="t"><b>Paper discussion —</b> reading methodology and critically appraising results.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> Reward design is often the highest-leverage choice in an RL project — shaping and structured rewards can make an intractable problem learnable.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 17 — Frontiers.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S24</span><h4>Research Papers, Innovation Trends (B)</h4></div>
+        <p class="s-obj"><b>Objective:</b> continue the study of key papers and analyse obstacles and challenges in the field and in business application.</p>
+        <div class="s-topics">
+          <div class="t"><b>Open challenges —</b> sample efficiency, safe exploration, sim-to-real transfer, reward hacking, and reproducibility.</div>
+          <div class="t"><b>Business obstacles —</b> what stands between a working prototype and a deployed RL system.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> Most industrial RL failures are not algorithmic — they are about data, simulation fidelity, and aligning the reward with the true business objective.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S25</span><h4>RL Applications</h4></div>
+        <p class="s-obj"><b>Objective:</b> explore practical business cases of RL across different industries.</p>
+        <div class="s-topics">
+          <div class="t"><b>Cross-industry cases —</b> recommendation, dynamic pricing, supply chain, finance, energy, robotics, and operations.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> RL fits problems framed as sequential decisions under uncertainty with a measurable objective — recognising that framing is the first business skill.</div>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S26</span><h4>Multi-Agent RL</h4></div>
+        <p class="s-obj"><b>Objective:</b> enter the multi-agent RL (MARL) sub-field and generalise the basic principles to multiple coexisting learners.</p>
+        <div class="s-topics">
+          <div class="t"><b>MARL dynamics —</b> cooperation, competition, and mixed settings; the environment becomes non-stationary as other agents learn.</div>
+          <div class="t"><b>Game-theoretic lens —</b> iterated games (e.g. the Axelrod tournament / iterated prisoner's dilemma): Tit-for-Tat, Always Defect, Grim, Pavlov.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> With multiple learners the ground shifts under each agent — convergence guarantees from single-agent RL no longer hold, and equilibria replace optima.</div>
+        <a href="multi-agent.html" class="demo-link">▶ Demo: Multi-Agent RL</a>
+      </div>
+
+      <div class="session">
+        <div class="s-head"><span class="s-num">S27</span><h4>Top Cases &amp; Companies</h4></div>
+        <p class="s-obj"><b>Objective:</b> study the field's leading companies and breakthrough examples.</p>
+        <div class="s-topics">
+          <div class="t"><b>Breakthroughs —</b> AlphaGo and AlphaZero (games), AlphaFold-2 (protein structure), tokamak fusion-reactor plasma control, and beyond.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> The headline successes share a recipe — a near-perfect simulator, massive self-play or search, and deep function approximation working together.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 16 — Applications and Case Studies.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODULE 8 -->
+  <div class="module" id="m8">
+    <div class="mod-head">
+      <span class="mod-kicker">Module 8</span>
+      <span class="mod-sessions">Sessions 28–30</span>
+    </div>
+    <h3 class="mod-title">Assessment: Test-Exam &amp; Group Project Presentations</h3>
+    <p class="muted">The closing module consolidates and assesses: a concept-review test-exam and the final group project presentations with discussion and Q&amp;A.</p>
+    <div class="callout mod-outcomes"><strong>Module learning outcomes.</strong> Demonstrate consolidated knowledge under exam conditions; present an end-to-end RL project clearly and defend design choices in Q&amp;A.</div>
+
+    <div class="timeline">
+
+      <div class="session exam">
+        <div class="s-head"><span class="s-num">S28</span><h4>Test-Exam</h4><span class="s-badge exam">test-exam</span></div>
+        <p class="s-obj"><b>Objective:</b> a concept-summary review examination — explicitly <em>not</em> a final exam.</p>
+        <div class="s-topics">
+          <div class="t"><b>Scope —</b> covers the concepts and algorithms across the course; its score adds to the other evaluation items.</div>
+          <div class="t"><b>No minimum —</b> no minimum passing grade is required for this item.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> The test-exam exists to make the real final exam familiar — practice the formats (multiple-choice, true/false, open) before they count fully.</div>
+      </div>
+
+      <div class="session group">
+        <div class="s-head"><span class="s-num">S29</span><h4>Group Projects Presentations (A)</h4><span class="s-badge group">group</span></div>
+        <p class="s-obj"><b>Objective:</b> present, discuss, and field Q&amp;A on the group projects (first half).</p>
+        <div class="s-topics">
+          <div class="t"><b>Presentation &amp; defence —</b> communicating an RL project's framing, method, results, and limitations to peers.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> Communicating <em>why</em> a method was chosen and what its limits are matters as much as the result itself.</div>
+      </div>
+
+      <div class="session group">
+        <div class="s-head"><span class="s-num">S30</span><h4>Group Projects Presentations (B), Wrap-Up</h4><span class="s-badge group">group</span></div>
+        <p class="s-obj"><b>Objective:</b> remaining group presentations, discussion, Q&amp;A, and course wrap-up.</p>
+        <div class="s-topics">
+          <div class="t"><b>Wrap-up —</b> synthesis of the course arc and pointers to where the field is heading.</div>
+        </div>
+        <div class="callout"><b>Key idea.</b> The course ends where the field begins — with a well-rounded foundation to keep learning RL independently.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== KEY CONCEPTS ===================== -->
+  <h2 id="concepts">Key Concepts — Glossary</h2>
+  <p class="muted">A quick-reference glossary of the ~30 core terms used throughout the course. Notation: <code>s</code> state, <code>a</code> action, <code>r</code> reward, <code>γ</code> discount, <code>π</code> policy, <code>α</code> step size.</p>
+  <dl class="glossary">
+    <div class="term"><dt>Agent / Environment</dt><dd>The learner/decision-maker and everything it interacts with. They exchange actions, states, and rewards in a loop.</dd></div>
+    <div class="term"><dt>Policy π(a|s)</dt><dd>A mapping from states to a probability distribution over actions — the agent's behaviour.</dd></div>
+    <div class="term"><dt>Reward &amp; Return</dt><dd>Reward r is the immediate scalar signal; return G<sub>t</sub> = Σ γ<sup>k</sup>r is the discounted cumulative reward the agent maximises.</dd></div>
+    <div class="term"><dt>Discount factor γ</dt><dd>A value in [0,1] weighting future rewards; smaller γ makes the agent myopic, larger γ far-sighted.</dd></div>
+    <div class="term"><dt>State-value V(s)</dt><dd>Expected return starting from state s and following policy π thereafter.</dd></div>
+    <div class="term"><dt>Action-value Q(s,a)</dt><dd>Expected return after taking action a in state s, then following π — the basis of value-based control.</dd></div>
+    <div class="term"><dt>Markov property</dt><dd>The future depends only on the current state, not the history that led there — the present state is a sufficient statistic.</dd></div>
+    <div class="term"><dt>MDP ⟨S,A,P,R,γ⟩</dt><dd>Markov Decision Process: the formal model of a sequential decision problem with stochastic transitions and rewards.</dd></div>
+    <div class="term"><dt>Bellman equations</dt><dd>Recursive consistency conditions for value functions; the expectation form evaluates π, the optimality form defines v*/q*.</dd></div>
+    <div class="term"><dt>Dynamic Programming</dt><dd>Exact solution of a known MDP by iterating Bellman backups — value iteration and policy iteration.</dd></div>
+    <div class="term"><dt>Generalized Policy Iteration</dt><dd>The interplay of policy evaluation and policy improvement converging to the optimal policy.</dd></div>
+    <div class="term"><dt>Exploration vs. exploitation</dt><dd>The trade-off between trying uncertain actions to gain information and choosing the current best to gain reward.</dd></div>
+    <div class="term"><dt>ε-greedy / UCB / Thompson</dt><dd>Strategies for managing exploration in bandits: random slack, optimism under uncertainty, and posterior sampling.</dd></div>
+    <div class="term"><dt>Monte Carlo methods</dt><dd>Estimate values by averaging complete observed returns — unbiased but high-variance, episodic only.</dd></div>
+    <div class="term"><dt>Temporal-Difference (TD)</dt><dd>Learn from incomplete episodes by bootstrapping toward r + γV(s′); the workhorse of practical RL.</dd></div>
+    <div class="term"><dt>Bootstrapping</dt><dd>Updating an estimate toward another estimate rather than a true sampled target — trades variance for bias.</dd></div>
+    <div class="term"><dt>SARSA vs. Q-learning</dt><dd>On-policy TD control (learns the policy it follows) vs. off-policy (learns the greedy optimal policy).</dd></div>
+    <div class="term"><dt>Expected SARSA</dt><dd>Uses the expected next-action value under the policy, reducing variance versus plain SARSA.</dd></div>
+    <div class="term"><dt>TD(λ) &amp; eligibility traces</dt><dd>A spectrum between TD(0) and Monte Carlo; traces credit recently-visited states for new errors.</dd></div>
+    <div class="term"><dt>On-policy / Off-policy</dt><dd>Whether the agent learns about the policy it is following, or about a different (e.g. greedy) target policy.</dd></div>
+    <div class="term"><dt>Importance sampling</dt><dd>Reweighting returns from a behaviour policy to estimate values under a target policy — enables off-policy learning.</dd></div>
+    <div class="term"><dt>Function approximation</dt><dd>Representing V, Q, or π with parameters (e.g. a neural net) so RL scales to large/continuous spaces via generalisation.</dd></div>
+    <div class="term"><dt>Deadly triad</dt><dd>The instability that can arise when bootstrapping, off-policy learning, and function approximation are combined.</dd></div>
+    <div class="term"><dt>Policy Gradient Theorem</dt><dd>Expresses ∇J(θ) as an expectation of ∇log π · return, enabling direct optimisation of parameterised policies.</dd></div>
+    <div class="term"><dt>REINFORCE</dt><dd>Monte Carlo policy gradient: update θ by ∇log π(a|s) scaled by the episode return.</dd></div>
+    <div class="term"><dt>Baseline &amp; Advantage</dt><dd>Subtracting V(s) (a baseline) gives A(s,a)=Q−V, reducing gradient variance without bias.</dd></div>
+    <div class="term"><dt>Actor-Critic / A2C</dt><dd>An actor (policy) trained with a critic's (value) low-variance advantage estimate.</dd></div>
+    <div class="term"><dt>DQN</dt><dd>Deep Q-Network: a neural Q-function stabilised by experience replay and a target network.</dd></div>
+    <div class="term"><dt>Experience replay</dt><dd>A buffer of past transitions sampled randomly to decorrelate updates and improve data efficiency.</dd></div>
+    <div class="term"><dt>Target network</dt><dd>A periodically-frozen copy of the Q-network used to compute stable regression targets.</dd></div>
+    <div class="term"><dt>Model-based vs. model-free</dt><dd>Whether the agent learns/uses a model of dynamics to plan, or learns values/policy directly from experience.</dd></div>
+    <div class="term"><dt>Inverse RL / Imitation</dt><dd>Recovering the reward function (IRL) or copying behaviour (behavioural cloning) from observed demonstrations.</dd></div>
+    <div class="term"><dt>Pareto frontier / NEAT</dt><dd>The set of non-dominated trade-offs in multi-objective optimisation; NEAT evolves neural-net weights and topology.</dd></div>
+    <div class="term"><dt>Multi-Agent RL (MARL)</dt><dd>RL with several simultaneously-learning agents, making the environment non-stationary; analysed via game theory.</dd></div>
+    <div class="term"><dt>Reward shaping</dt><dd>Adding auxiliary reward terms to guide learning toward sparse-reward goals without changing the optimal policy.</dd></div>
+  </dl>
+
+  <!-- ===================== BIBLIOGRAPHY ===================== -->
+  <h2 id="bibliography">Bibliography</h2>
+  <div class="biblio">
+    <h3 style="margin-top:0.3rem">Compulsory</h3>
+    <div class="ref">
+      <div class="cite">Richard S. Sutton &amp; Andrew G. Barto (2018). <em>Reinforcement Learning: An Introduction</em>, 2nd edition. MIT Press / AbeBooks. ISBN 9780262039246 (Digital).</div>
+      <div class="annot">
+        The single required text and the backbone of the program — nearly every session's readings map to its chapters
+        (Ch. 1 elements &amp; history; Ch. 2 bandits; Ch. 3 finite MDPs; Ch. 4 dynamic programming; Ch. 5 Monte Carlo;
+        Ch. 6 TD; Ch. 7 n-step; Ch. 8 planning &amp; learning; Ch. 9–12 approximation &amp; eligibility traces; Ch. 13
+        policy gradients &amp; actor-critic; Ch. 16 applications; Ch. 17 frontiers). The syllabus notes it covers the ground
+        essential to understanding much of the published work on RL. It can be hard going without a relatively solid
+        mathematical background — especially the Bellman-equation and Monte-Carlo sections — but it is worth it and is a
+        must-read for anyone doing graduate research in reinforcement learning.
+      </div>
+    </div>
+  </div>
+  <div class="note" style="margin-top:1rem">
+    <strong>Policies.</strong> The syllabus also refers students to the University's <em>Code of Conduct</em> (behaviour rules),
+    <em>Attendance Policy</em>, and <em>Ethics Code</em>; the Program Director may provide further indications. See
+    <a href="SYLLABUS.pdf" target="_blank" rel="noopener">SYLLABUS.pdf</a> for the authoritative text of all rules.
+  </div>
+
+  <h2>Explore the Demos</h2>
+  <p class="muted">Every technique above that has a live visualisation in this repo, in course order:</p>
+  <div class="grid cards toc-cards" style="margin-top:1rem">
+    <a href="bandits.html" class="card"><span class="num">S04</span><h3>Multi-Armed Bandits</h3><p>ε-greedy, UCB, Thompson sampling, gradient bandits — pull arms and watch regret accumulate.</p></a>
+    <a href="mdp.html" class="card"><span class="num">S05–06</span><h3>MDPs &amp; Gridworld</h3><p>States, actions, transitions, rewards — the Bellman equation in action.</p></a>
+    <a href="dp.html" class="card"><span class="num">S07</span><h3>Dynamic Programming</h3><p>Value &amp; policy iteration sweeping the Bellman optimality update to v* and π*.</p></a>
+    <a href="td.html" class="card"><span class="num">S08–09</span><h3>Monte Carlo &amp; TD</h3><p>SARSA, Q-Learning, Expected SARSA, MC control — the cliff-walking classic.</p></a>
+    <a href="function-approx.html" class="card"><span class="num">S15</span><h3>Function Approximation</h3><p>Tile-coding, RBFs, polynomial features approximating a value function with SGD.</p></a>
+    <a href="policy-gradient.html" class="card"><span class="num">S16</span><h3>Policy Gradients</h3><p>Sample episodes, scale log-probabilities by returns, steer the policy directly.</p></a>
+    <a href="actor-critic.html" class="card"><span class="num">S17</span><h3>Actor-Critic (A2C)</h3><p>A learned baseline — one network acts, one critiques; watch variance drop.</p></a>
+    <a href="dqn.html" class="card"><span class="num">S21</span><h3>Deep Q-Networks</h3><p>Neural Q-function, replay buffer, target network, ε-decay — the trio that beat Atari.</p></a>
+    <a href="evolution.html" class="card"><span class="num">S12</span><h3>Evolutionary Methods</h3><p>A genetic algorithm evolves a population of policies — gradient-free.</p></a>
+    <a href="multi-agent.html" class="card"><span class="num">S26</span><h3>Multi-Agent RL</h3><p>The Axelrod tournament: Tit-for-Tat vs. Always Defect, Grim, Pavlov.</p></a>
+  </div>
+
+</main>
+
+<footer>
+  Course-structure page · built from the <a href="SYLLABUS.pdf" target="_blank" rel="noopener">AI: Reinforcement Learning</a> syllabus (BCSAI, IE University) ·
+  <a href="index.html">← back to the interactive demos</a>
+</footer>
+
+</body>
+</html>
