@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Worked Project — From Tabular Q-Learning to DQN — REINFORCE</title>
+<meta name="description" content="An end-to-end worked example project for the BCSAI Reinforcement Learning course: implement tabular Q-learning on a gridworld, scale up to a Deep Q-Network on CartPole, and compare sample efficiency and stability. Real, correct Python (NumPy + PyTorch), the underlying maths, pseudocode, results, pitfalls, and a mapping to course learning outcomes." />
+<link rel="stylesheet" href="assets/style.css" />
+<style>
+/* ---- project.html-specific: code blocks + a few layout helpers, on top of the shared tokens ---- */
+.subnav { position:sticky; top:49px; z-index:40;
+  background:rgba(10,14,26,0.9); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border); padding:0.5rem 1.5rem;
+  display:flex; gap:0.4rem 0.8rem; flex-wrap:wrap; font-size:0.8rem; }
+.subnav a { color:var(--text-dim); font-family:var(--mono); padding:0.2rem 0.5rem; border-radius:6px; }
+.subnav a:hover { color:var(--text); background:var(--bg-elev); }
+
+.project-hero { text-align:center; padding:3rem 1rem 1.5rem; }
+.project-hero .tagline { font-family:var(--mono); color:var(--accent2); font-size:0.85rem;
+  text-transform:uppercase; letter-spacing:0.2em; margin-bottom:1rem; }
+.project-hero h1 { font-size:clamp(1.9rem,4.6vw,3rem); margin:0 0 0.8rem;
+  background:linear-gradient(135deg,var(--accent),var(--accent2) 60%,var(--accent3));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  font-weight:800; letter-spacing:-0.02em; }
+.project-hero p { color:var(--text-dim); font-size:1.08rem; max-width:820px; margin:0 auto; }
+
+.meta-grid { display:grid; gap:0.6rem; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); margin:1.2rem 0 0.5rem; }
+.meta-cell { background:var(--bg-elev); border:1px solid var(--border); border-radius:8px; padding:0.6rem 0.8rem; }
+.meta-cell .lbl { display:block; font-size:0.68rem; color:var(--text-dim); font-family:var(--mono);
+  text-transform:uppercase; letter-spacing:0.1em; }
+.meta-cell .v { display:block; font-size:0.95rem; font-weight:700; margin-top:0.2rem; color:var(--text); }
+
+/* code blocks — scoped to this page, harmonised with the site's dark palette */
+pre {
+  background:#050811; border:1px solid var(--border); border-left:3px solid var(--accent2);
+  border-radius:0 10px 10px 0; padding:1rem 1.1rem; margin:1rem 0;
+  overflow-x:auto; font-family:var(--mono); font-size:0.82rem; line-height:1.5;
+}
+pre code { background:none; padding:0; color:#cdd6f4; font-size:inherit; }
+pre .cm  { color:#6b7394; font-style:italic; }   /* comment   */
+pre .kw  { color:#c792ea; }                       /* keyword   */
+pre .st  { color:#c3e88d; }                       /* string    */
+pre .nm  { color:#f78c6c; }                       /* number    */
+pre .fn  { color:#82aaff; }                       /* func/def  */
+pre .bi  { color:#00d4ff; }                       /* builtin   */
+.code-cap { font-family:var(--mono); font-size:0.74rem; color:var(--text-dim);
+  text-transform:uppercase; letter-spacing:0.12em; margin:1.2rem 0 -0.4rem; }
+
+/* ascii / curve plates rendered as text */
+.plate { background:#050811; border:1px solid var(--border); border-radius:10px;
+  padding:0.9rem 1.1rem; margin:1rem 0; overflow-x:auto;
+  font-family:var(--mono); font-size:0.78rem; line-height:1.35; color:var(--text-dim); white-space:pre; }
+
+table.cmp { width:100%; border-collapse:collapse; font-size:0.88rem; margin:1rem 0; }
+table.cmp th, table.cmp td { padding:0.5rem 0.7rem; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+table.cmp th { font-family:var(--mono); font-size:0.74rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent); }
+table.cmp td:first-child { color:var(--text-dim); font-family:var(--mono); font-size:0.82rem; white-space:nowrap; }
+table.cmp tr:hover td { background:var(--bg-elev); }
+
+.steps { counter-reset:step; list-style:none; padding-left:0; }
+.steps li { position:relative; padding-left:2.2rem; margin-bottom:0.6rem; }
+.steps li::before { counter-increment:step; content:counter(step);
+  position:absolute; left:0; top:0; width:1.5rem; height:1.5rem; border-radius:50%;
+  background:var(--bg-elev); border:1px solid var(--accent); color:var(--accent2);
+  font-family:var(--mono); font-size:0.78rem; display:flex; align-items:center; justify-content:center; }
+
+.demo-links { display:flex; flex-wrap:wrap; gap:0.5rem; margin:0.6rem 0; }
+.demo-links a { font-family:var(--mono); font-size:0.78rem; background:var(--bg-elev);
+  border:1px solid var(--border); border-radius:999px; padding:0.25rem 0.7rem; color:var(--accent2); }
+.demo-links a:hover { border-color:var(--accent); color:var(--text); }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a href="index.html" class="logo">⟁ REINFORCE</a>
+  <a class="navlink" href="./index.html">← Demos</a>
+  <a class="navlink" href="./course.html">Course&nbsp;Outline</a>
+  <a class="navlink active" href="./project.html">Example&nbsp;Project</a>
+  <a class="navlink" href="bandits.html">Bandits</a>
+  <a class="navlink" href="mdp.html">MDP</a>
+  <a class="navlink" href="td.html">MC&nbsp;/&nbsp;TD</a>
+  <a class="navlink" href="function-approx.html">Function&nbsp;Approx</a>
+  <a class="navlink" href="dqn.html">DQN</a>
+  <a class="navlink" href="./SYLLABUS.pdf" target="_blank" rel="noopener">SYLLABUS.pdf ↗</a>
+</nav>
+
+<div class="subnav">
+  <a href="#overview">Overview</a>
+  <a href="#setup">RL&nbsp;Setup</a>
+  <a href="#qlearning">Tabular&nbsp;Q</a>
+  <a href="#dqn">DQN</a>
+  <a href="#results">Results</a>
+  <a href="#pitfalls">Pitfalls</a>
+  <a href="#outcomes">Outcomes</a>
+  <a href="#extensions">Extensions</a>
+  <a href="#references">References</a>
+</div>
+
+<main>
+
+<section class="project-hero">
+  <div class="tagline">Worked example · Python</div>
+  <h1>From Tabular Q-Learning to DQN<br/>on a Control Task</h1>
+  <p>One project, two algorithms, one clean comparison. We solve a discrete gridworld (FrozenLake) with <strong>tabular Q-learning</strong> using nothing but NumPy, then scale the very same control idea up to continuous state with a <strong>Deep Q-Network</strong> on CartPole using PyTorch — and measure what we actually gain (and lose) by going deep.</p>
+</section>
+
+<div class="meta-grid">
+  <div class="meta-cell"><span class="lbl">Stack</span><span class="v">Python · NumPy · PyTorch</span></div>
+  <div class="meta-cell"><span class="lbl">Environments</span><span class="v">FrozenLake · CartPole</span></div>
+  <div class="meta-cell"><span class="lbl">Sessions exercised</span><span class="v">4–11, 13–15, 21</span></div>
+  <div class="meta-cell"><span class="lbl">Difficulty</span><span class="v">Basic → Intermediate</span></div>
+  <div class="meta-cell"><span class="lbl">Est. effort</span><span class="v">6–8 hours</span></div>
+</div>
+
+<!-- ============================================================= -->
+<h2 id="overview">1 · Overview</h2>
+<p>The single most important transition in a first RL course is the jump from <em>tabular</em> methods — where every state–action value lives in an array you can print — to <em>function approximation</em>, where a neural network estimates those values for states you have never even visited. This project makes that transition concrete on a single control problem.</p>
+
+<p><strong>Goal.</strong> Learn a control policy that maximises expected discounted return, first in a tiny discrete world and then in a continuous one, and answer two practical questions a practitioner always asks:</p>
+<ul class="ck">
+  <li><strong>Sample efficiency</strong> — how many environment steps until the policy is good?</li>
+  <li><strong>Stability</strong> — does training converge smoothly, or oscillate / diverge?</li>
+</ul>
+
+<p>We deliberately keep the <em>algorithmic core identical</em> across both parts — a temporal-difference Q-update with ε-greedy exploration — so that every difference we observe is attributable to the representation (a table vs. a network), not to a different learning rule.</p>
+
+<div class="note"><strong>How this maps to the syllabus.</strong> Part 3 (tabular Q-learning) is the core of Sessions 9–10 (Temporal Differences; A First Practice). Part 4 (DQN) realises Sessions 15 (Approximation Methods), and 21 (Deep RL Practice), and leans on the MDP/Bellman machinery of Sessions 5–7. See <a href="#outcomes">§7 — mapping to learning outcomes</a>.</p>
+
+<p class="muted">Related interactive demos for each idea below:</p>
+<div class="demo-links">
+  <a href="./bandits.html">ε-greedy &amp; exploration →</a>
+  <a href="./mdp.html">MDPs &amp; Gridworld →</a>
+  <a href="./td.html">SARSA / Q-Learning →</a>
+  <a href="./function-approx.html">Function Approximation →</a>
+  <a href="./dqn.html">Deep Q-Networks →</a>
+  <a href="./course.html#program">Course program →</a>
+</div>
+
+<!-- ============================================================= -->
+<h2 id="setup">2 · The RL setup</h2>
+<p>Both tasks are finite-horizon episodic control problems modelled as a <strong>Markov Decision Process</strong> (MDP) — exactly the object introduced in Session 5.</p>
+
+<div class="math">
+  MDP:&nbsp; ⟨ 𝒮, 𝒜, P, R, γ ⟩<br/>
+  P(s′ | s, a) = Pr{ S<sub>t+1</sub> = s′ | S<sub>t</sub> = s, A<sub>t</sub> = a }<br/>
+  R(s, a) = 𝔼[ R<sub>t+1</sub> | S<sub>t</sub> = s, A<sub>t</sub> = a ],&nbsp;&nbsp; γ ∈ [0, 1)
+</div>
+
+<p>The agent seeks a policy π(a | s) maximising the expected <strong>discounted return</strong> from each state:</p>
+
+<div class="math">
+  G<sub>t</sub> = Σ<sub>k=0</sub><sup>∞</sup> γ<sup>k</sup> R<sub>t+k+1</sub><br/>
+  v<sub>π</sub>(s) = 𝔼<sub>π</sub>[ G<sub>t</sub> | S<sub>t</sub> = s ]&nbsp;&nbsp;&nbsp;&nbsp; (state-value)<br/>
+  q<sub>π</sub>(s, a) = 𝔼<sub>π</sub>[ G<sub>t</sub> | S<sub>t</sub> = s, A<sub>t</sub> = a ]&nbsp;&nbsp;&nbsp;&nbsp; (action-value)
+</div>
+
+<p>The whole project is built around the action-value function <code>q(s, a)</code>, because once we have a good estimate of it the greedy policy is trivial: <code>π(s) = argmax_a q(s, a)</code>. The optimal <code>q*</code> satisfies the <strong>Bellman optimality equation</strong> (Session 9):</p>
+
+<div class="math">
+  q*(s, a) = 𝔼[ R<sub>t+1</sub> + γ&nbsp;max<sub>a′</sub> q*(S<sub>t+1</sub>, a′) | S<sub>t</sub> = s, A<sub>t</sub> = a ]
+</div>
+
+<p><strong>Exploration.</strong> A purely greedy agent that always picks <code>argmax_a q(s,a)</code> may lock onto a bad estimate and never discover a better action. We resolve this exploration–exploitation tension (Session 4, bandits) with an <strong>ε-greedy</strong> policy and an annealing schedule that explores early and exploits late:</p>
+
+<div class="math">
+  π(a | s) = { &nbsp;1 − ε + ε/|𝒜|&nbsp; if a = argmax<sub>a′</sub> q(s, a′);&nbsp;&nbsp; ε/|𝒜|&nbsp; otherwise }<br/>
+  ε<sub>t</sub> = ε<sub>end</sub> + (ε<sub>start</sub> − ε<sub>end</sub>) · e<sup>−t / τ</sup>&nbsp;&nbsp;&nbsp;&nbsp; (exponential decay)
+</div>
+
+<!-- ============================================================= -->
+<h2 id="qlearning">3 · Tabular Q-learning (FrozenLake)</h2>
+<p>FrozenLake-v1 is a 4×4 gridworld: the agent starts top-left, must reach the goal (bottom-right) without stepping into a hole. Reward is <code>+1</code> on reaching the goal and <code>0</code> otherwise — a sparse-reward control task with 16 discrete states and 4 actions. We use the deterministic variant (<code>is_slippery=False</code>) so the learning signal is clean; flip it to <code>True</code> for a stochastic challenge.</p>
+
+<p>Q-learning is an <strong>off-policy</strong> TD control method: it learns <code>q*</code> while behaving ε-greedily. The update bootstraps the current estimate toward the Bellman target (Session 9):</p>
+
+<div class="math">
+  Q(S<sub>t</sub>, A<sub>t</sub>) ← Q(S<sub>t</sub>, A<sub>t</sub>) + α [ R<sub>t+1</sub> + γ&nbsp;max<sub>a</sub> Q(S<sub>t+1</sub>, a) − Q(S<sub>t</sub>, A<sub>t</sub>) ]<br/>
+  δ<sub>t</sub> = R<sub>t+1</sub> + γ&nbsp;max<sub>a</sub> Q(S<sub>t+1</sub>, a) − Q(S<sub>t</sub>, A<sub>t</sub>)&nbsp;&nbsp;&nbsp;&nbsp; (TD error)
+</div>
+
+<p class="muted">Note the <code>max</code> over next-state actions: the target uses the <em>best</em> action regardless of what ε-greedy actually does next. That is precisely what makes it off-policy and what makes it learn <code>q*</code> rather than <code>q<sub>π</sub></code>.</p>
+
+<h3>Algorithm (pseudocode)</h3>
+<div class="math">
+  initialise Q(s, a) = 0 for all s, a<br/>
+  <strong>for</strong> each episode:<br/>
+  &nbsp;&nbsp;s ← env.reset()<br/>
+  &nbsp;&nbsp;<strong>repeat</strong> until terminal:<br/>
+  &nbsp;&nbsp;&nbsp;&nbsp;a ← ε-greedy(Q, s)<br/>
+  &nbsp;&nbsp;&nbsp;&nbsp;s′, r, done ← env.step(a)<br/>
+  &nbsp;&nbsp;&nbsp;&nbsp;target ← r + γ · (0 if done else max<sub>a′</sub> Q(s′, a′))<br/>
+  &nbsp;&nbsp;&nbsp;&nbsp;Q(s, a) ← Q(s, a) + α · (target − Q(s, a))<br/>
+  &nbsp;&nbsp;&nbsp;&nbsp;s ← s′<br/>
+  &nbsp;&nbsp;decay ε
+</div>
+
+<div class="code-cap">q_learning.py — pure NumPy, no framework</div>
+<pre><code><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> gymnasium <span class="kw">as</span> gym
+
+
+<span class="kw">def</span> <span class="fn">epsilon_greedy</span>(Q, state, eps, n_actions, rng):
+    <span class="cm"># With prob eps explore uniformly; otherwise act greedily.</span>
+    <span class="kw">if</span> rng.random() &lt; eps:
+        <span class="kw">return</span> rng.integers(n_actions)
+    <span class="cm"># argmax with random tie-breaking so ties don't bias one action</span>
+    q = Q[state]
+    <span class="kw">return</span> rng.choice(np.flatnonzero(q == q.max()))
+
+
+<span class="kw">def</span> <span class="fn">train_q_learning</span>(env, episodes=<span class="nm">5000</span>, alpha=<span class="nm">0.1</span>, gamma=<span class="nm">0.99</span>,
+                     eps_start=<span class="nm">1.0</span>, eps_end=<span class="nm">0.05</span>, eps_decay=<span class="nm">0.001</span>, seed=<span class="nm">0</span>):
+    rng = np.random.default_rng(seed)
+    n_states  = env.observation_space.n
+    n_actions = env.action_space.n
+    Q = np.zeros((n_states, n_actions), dtype=np.float64)
+    returns = []
+
+    <span class="kw">for</span> ep <span class="kw">in</span> <span class="bi">range</span>(episodes):
+        eps = eps_end + (eps_start - eps_end) * np.exp(-eps_decay * ep)
+        state, _ = env.reset(seed=<span class="bi">int</span>(rng.integers(<span class="nm">1</span> &lt;&lt; <span class="nm">31</span>)))
+        done, G = <span class="bi">False</span>, <span class="nm">0.0</span>
+
+        <span class="kw">while</span> <span class="kw">not</span> done:
+            action = epsilon_greedy(Q, state, eps, n_actions, rng)
+            nxt, reward, terminated, truncated, _ = env.step(action)
+            done = terminated <span class="kw">or</span> truncated
+
+            <span class="cm"># Bellman target: no bootstrap past a terminal state.</span>
+            best_next = <span class="nm">0.0</span> <span class="kw">if</span> terminated <span class="kw">else</span> Q[nxt].max()
+            td_target = reward + gamma * best_next
+            td_error  = td_target - Q[state, action]
+            Q[state, action] += alpha * td_error          <span class="cm"># the Q-learning update</span>
+
+            state, G = nxt, G + reward
+        returns.append(G)
+
+    <span class="kw">return</span> Q, returns
+
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    env = gym.make(<span class="st">"FrozenLake-v1"</span>, is_slippery=<span class="bi">False</span>)
+    Q, returns = train_q_learning(env)
+
+    <span class="cm"># Greedy policy and its success rate over 1000 fresh episodes.</span>
+    policy = Q.argmax(axis=<span class="nm">1</span>)
+    wins = <span class="nm">0</span>
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="bi">range</span>(<span class="nm">1000</span>):
+        s, _ = env.reset()
+        done = <span class="bi">False</span>
+        <span class="kw">while</span> <span class="kw">not</span> done:
+            s, r, term, trunc, _ = env.step(<span class="bi">int</span>(policy[s]))
+            done = term <span class="kw">or</span> trunc
+        wins += <span class="bi">int</span>(r == <span class="nm">1.0</span>)
+    <span class="bi">print</span>(<span class="st">f"greedy success rate: {wins / 1000:.1%}"</span>)
+</code></pre>
+
+<h3>The learning curve</h3>
+<p>Plotting a 100-episode moving average of return shows the classic tabular signature: a long, near-flat stretch while ε is high and the sparse reward is rarely hit, a sharp climb once the agent stumbles onto the goal and the value back-propagates along the path, then a clean plateau at the optimum. Because the table has one independent cell per <code>(s,a)</code>, there is no interference — once a cell is correct it stays correct.</p>
+
+<div class="plate">success
+rate
+ 1.0 |                              ............________________
+     |                       ......./
+ 0.8 |                    .../
+     |                  ../
+ 0.6 |                ../
+     |               ./
+ 0.4 |              ./
+     |            ../
+ 0.2 |          ../
+     |   ......./
+ 0.0 |__________________________________________________________
+     0       1k      2k      3k      4k      5k   episodes
+        (moving avg of episodic return, deterministic FrozenLake)</div>
+
+<p>On the deterministic map the greedy policy reaches <strong>100% success</strong> after roughly 1.5–2k episodes (≈ a few thousand environment steps). The full <code>4×16</code> Q-table can be printed and inspected by hand — the entire benefit, and the entire limitation, of tabular RL.</p>
+
+<!-- ============================================================= -->
+<h2 id="dqn">4 · Deep Q-Network (CartPole)</h2>
+<p>CartPole-v1 has a <strong>continuous</strong> 4-D state — cart position, cart velocity, pole angle, pole angular velocity — and 2 actions (push left / right). A table is impossible: there are infinitely many states. We replace <code>Q(s, a)</code> with a neural network <code>Q(s, a; θ)</code> that <em>generalises</em> across nearby states (Session 15), and train it to satisfy the same Bellman target.</p>
+
+<p>Naively bootstrapping a network off itself diverges — the famous "deadly triad" of function approximation + bootstrapping + off-policy learning. DQN (Session 21) tames it with two ideas:</p>
+
+<table class="cmp">
+  <tr><th>Trick</th><th>What it fixes</th></tr>
+  <tr><td>Replay buffer</td><td>Consecutive transitions are highly correlated; SGD assumes i.i.d. samples. Storing transitions and sampling random mini-batches decorrelates updates and reuses data (sample efficiency).</td></tr>
+  <tr><td>Target network</td><td>The TD target itself depends on θ. Bootstrapping off the same weights you are updating chases a moving target. A frozen copy θ⁻, synced every <code>C</code> steps, holds the target still.</td></tr>
+</table>
+
+<p>The loss is the mean-squared TD error over a mini-batch <code>B</code> sampled from the replay buffer <code>D</code>:</p>
+
+<div class="math">
+  y<sub>i</sub> = r<sub>i</sub> + γ&nbsp;(1 − done<sub>i</sub>)&nbsp;max<sub>a′</sub> Q(s′<sub>i</sub>, a′; θ⁻)&nbsp;&nbsp;&nbsp;&nbsp; (target, uses θ⁻)<br/>
+  L(θ) = (1/|B|) Σ<sub>i∈B</sub> [ y<sub>i</sub> − Q(s<sub>i</sub>, a<sub>i</sub>; θ) ]<sup>2</sup><br/>
+  θ ← θ − α ∇<sub>θ</sub> L(θ)&nbsp;&nbsp;··&nbsp;&nbsp;every C steps:&nbsp; θ⁻ ← θ
+</div>
+
+<h3>Algorithm (pseudocode)</h3>
+<div class="math">
+  initialise θ, θ⁻ ← θ, empty replay buffer D<br/>
+  <strong>for</strong> each step:<br/>
+  &nbsp;&nbsp;a ← ε-greedy(Q(·; θ), s);&nbsp; s′, r, done ← env.step(a)<br/>
+  &nbsp;&nbsp;store (s, a, r, s′, done) in D;&nbsp; s ← s′<br/>
+  &nbsp;&nbsp;sample mini-batch B ∼ D<br/>
+  &nbsp;&nbsp;y ← r + γ (1 − done) max<sub>a′</sub> Q(s′, a′; θ⁻)<br/>
+  &nbsp;&nbsp;θ ← θ − α ∇<sub>θ</sub> (y − Q(s, a; θ))<sup>2</sup><br/>
+  &nbsp;&nbsp;every C steps: θ⁻ ← θ;&nbsp;&nbsp; decay ε
+</div>
+
+<div class="code-cap">dqn.py — PyTorch + Gymnasium</div>
+<pre><code><span class="kw">import</span> random
+<span class="kw">from</span> collections <span class="kw">import</span> deque
+
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> torch
+<span class="kw">import</span> torch.nn <span class="kw">as</span> nn
+<span class="kw">import</span> gymnasium <span class="kw">as</span> gym
+
+
+<span class="kw">class</span> <span class="fn">QNet</span>(nn.Module):
+    <span class="cm">"""Maps a state to one Q-value per action: s -> [Q(s,a0), Q(s,a1)]."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, n_obs, n_act, hidden=<span class="nm">128</span>):
+        <span class="bi">super</span>().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(n_obs, hidden), nn.ReLU(),
+            nn.Linear(hidden, hidden), nn.ReLU(),
+            nn.Linear(hidden, n_act),
+        )
+
+    <span class="kw">def</span> <span class="fn">forward</span>(self, x):
+        <span class="kw">return</span> self.net(x)
+
+
+<span class="kw">class</span> <span class="fn">ReplayBuffer</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, capacity=<span class="nm">50_000</span>):
+        self.buf = deque(maxlen=capacity)
+
+    <span class="kw">def</span> <span class="fn">push</span>(self, *transition):
+        self.buf.append(transition)            <span class="cm"># (s, a, r, s', done)</span>
+
+    <span class="kw">def</span> <span class="fn">sample</span>(self, batch_size):
+        batch = random.sample(self.buf, batch_size)
+        s, a, r, s2, d = <span class="bi">zip</span>(*batch)
+        <span class="kw">return</span> (torch.as_tensor(np.array(s), dtype=torch.float32),
+                torch.as_tensor(a, dtype=torch.int64).unsqueeze(<span class="nm">1</span>),
+                torch.as_tensor(r, dtype=torch.float32).unsqueeze(<span class="nm">1</span>),
+                torch.as_tensor(np.array(s2), dtype=torch.float32),
+                torch.as_tensor(d, dtype=torch.float32).unsqueeze(<span class="nm">1</span>))
+
+    <span class="kw">def</span> <span class="fn">__len__</span>(self):
+        <span class="kw">return</span> <span class="bi">len</span>(self.buf)
+
+
+<span class="kw">def</span> <span class="fn">train_dqn</span>(env_id=<span class="st">"CartPole-v1"</span>, total_steps=<span class="nm">60_000</span>, gamma=<span class="nm">0.99</span>,
+              lr=<span class="nm">1e-3</span>, batch_size=<span class="nm">64</span>, warmup=<span class="nm">1_000</span>, target_sync=<span class="nm">500</span>,
+              eps_start=<span class="nm">1.0</span>, eps_end=<span class="nm">0.05</span>, eps_decay=<span class="nm">10_000</span>, seed=<span class="nm">0</span>):
+    torch.manual_seed(seed); random.seed(seed); np.random.seed(seed)
+    env = gym.make(env_id)
+    n_obs = env.observation_space.shape[<span class="nm">0</span>]
+    n_act = env.action_space.n
+
+    online = QNet(n_obs, n_act)
+    target = QNet(n_obs, n_act)
+    target.load_state_dict(online.state_dict())   <span class="cm"># theta_minus &lt;- theta</span>
+    target.eval()
+
+    optim = torch.optim.Adam(online.parameters(), lr=lr)
+    buffer = ReplayBuffer()
+    returns, ep_return = [], <span class="nm">0.0</span>
+
+    state, _ = env.reset(seed=seed)
+    <span class="kw">for</span> step <span class="kw">in</span> <span class="bi">range</span>(<span class="nm">1</span>, total_steps + <span class="nm">1</span>):
+        eps = eps_end + (eps_start - eps_end) * np.exp(-step / eps_decay)
+
+        <span class="cm"># --- act (epsilon-greedy on the online network) ---</span>
+        <span class="kw">if</span> random.random() &lt; eps:
+            action = env.action_space.sample()
+        <span class="kw">else</span>:
+            <span class="kw">with</span> torch.no_grad():
+                q = online(torch.as_tensor(state, dtype=torch.float32))
+                action = <span class="bi">int</span>(q.argmax().item())
+
+        nxt, reward, terminated, truncated, _ = env.step(action)
+        done = terminated <span class="kw">or</span> truncated
+        buffer.push(state, action, reward, nxt, <span class="bi">float</span>(terminated))
+        state, ep_return = nxt, ep_return + reward
+
+        <span class="kw">if</span> done:
+            returns.append(ep_return)
+            state, _ = env.reset()
+            ep_return = <span class="nm">0.0</span>
+
+        <span class="cm"># --- learn (one gradient step once the buffer has warmed up) ---</span>
+        <span class="kw">if</span> <span class="bi">len</span>(buffer) &gt;= warmup:
+            s, a, r, s2, d = buffer.sample(batch_size)
+
+            q_sa = online(s).gather(<span class="nm">1</span>, a)                      <span class="cm"># Q(s,a; theta)</span>
+            <span class="kw">with</span> torch.no_grad():
+                max_q_next = target(s2).max(dim=<span class="nm">1</span>, keepdim=<span class="bi">True</span>).values
+                y = r + gamma * (<span class="nm">1.0</span> - d) * max_q_next          <span class="cm"># TD target via theta_minus</span>
+
+            loss = nn.functional.smooth_l1_loss(q_sa, y)        <span class="cm"># Huber: robust to outliers</span>
+            optim.zero_grad()
+            loss.backward()
+            nn.utils.clip_grad_norm_(online.parameters(), <span class="nm">10.0</span>)
+            optim.step()
+
+        <span class="cm"># --- periodically sync the target network ---</span>
+        <span class="kw">if</span> step % target_sync == <span class="nm">0</span>:
+            target.load_state_dict(online.state_dict())
+
+    <span class="kw">return</span> online, returns
+
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    net, returns = train_dqn()
+    last100 = np.mean(returns[-<span class="nm">100</span>:])
+    <span class="bi">print</span>(<span class="st">f"mean return over last 100 episodes: {last100:.1f} (solved = 475)"</span>)
+</code></pre>
+
+<div class="note"><strong>One subtlety worth its own callout.</strong> The target uses <code>(1 − terminated)</code>, <em>not</em> <code>(1 − done)</code>. CartPole's <code>truncated</code> flag fires at the 500-step time limit — but the pole has <em>not</em> fallen, so the value of the next state is genuinely non-zero. Zeroing it out there teaches the agent the episode "ends badly" at 500 steps, which silently caps performance. Bootstrap past truncation, stop only at true termination.</div>
+
+<!-- ============================================================= -->
+<h2 id="results">5 · Results &amp; comparison</h2>
+<p>CartPole's return is the number of steps the pole stays up (max 500); the task is considered "solved" at a 100-episode average ≥ 475. The DQN reward curve is far noisier than the tabular one — long stretches of improvement punctuated by sudden collapses where a stale target or an unlucky batch destabilises the value estimates, followed by recovery.</p>
+
+<div class="plate">return
+(steps)
+ 500 |                         .  ..  ......___.. ___......._____
+     |                      . . :. :: :  :   :  :
+ 400 |                    .  :: ::  :
+     |                  .. ::
+ 300 |                .:::
+     |              .::
+ 200 |           ..::
+     |        ..:
+ 100 |   .....:
+     |..:
+   0 |__________________________________________________________
+     0     10k    20k    30k    40k    50k    60k   env steps
+        (per-episode return; note the variance vs. the tabular curve)</div>
+
+<table class="cmp">
+  <tr>
+    <th>Dimension</th>
+    <th>Tabular Q-learning</th>
+    <th>DQN</th>
+  </tr>
+  <tr><td>Environment</td><td>FrozenLake (16 states, discrete)</td><td>CartPole (4-D continuous state)</td></tr>
+  <tr><td>Representation</td><td>Q-table, 16×4 = 64 numbers</td><td>MLP, ≈ 17k parameters</td></tr>
+  <tr><td>Generalisation</td><td>None — each (s,a) independent</td><td>Yes — shares structure across states</td></tr>
+  <tr><td>Sample efficiency</td><td>High per state, but cannot scale beyond tiny state spaces</td><td>Lower per step; replay reuses data to compensate</td></tr>
+  <tr><td>Stability</td><td>Provably converges (under standard step-size conditions)</td><td>No convergence guarantee; needs replay + target net + clipping</td></tr>
+  <tr><td>Learning curve</td><td>Monotone-ish, clean plateau</td><td>Noisy, prone to transient collapses</td></tr>
+  <tr><td>Steps to "solve"</td><td>≈ 2–4k env steps (det. map)</td><td>≈ 30–50k env steps</td></tr>
+  <tr><td>Wall-clock / step</td><td>Microseconds (array write)</td><td>Milliseconds (forward + backward pass)</td></tr>
+  <tr><td>Interpretability</td><td>Full — print the table</td><td>Opaque — values are network outputs</td></tr>
+</table>
+
+<p><strong>The headline.</strong> Going deep buys you <em>scalability to continuous / high-dimensional states</em> — the only reason to pay for it — at the cost of <em>stability and sample efficiency</em>. On a problem small enough for a table, a table wins on every axis. The art of practical RL is knowing which regime you are in.</p>
+
+<!-- ============================================================= -->
+<h2 id="pitfalls">6 · Pitfalls &amp; hyperparameters</h2>
+<ul class="ck">
+  <li><strong>ε decays too fast.</strong> If exploration collapses before the agent ever reaches the goal/keeps the pole up, it has nothing to learn from. Sparse-reward FrozenLake especially needs a long exploratory phase.</li>
+  <li><strong>Learning rate too high (DQN).</strong> Large <code>lr</code> with a moving target diverges to NaN value estimates. Pair a modest <code>lr=1e-3</code> with gradient clipping and a Huber loss.</li>
+  <li><strong>Target sync too frequent.</strong> Small <code>C</code> reintroduces the moving-target instability; too large <code>C</code> makes targets stale and learning sluggish. <code>C ≈ 500–1000</code> steps is a sane default for CartPole.</li>
+  <li><strong>Replay buffer too small.</strong> A tiny buffer keeps samples correlated and recent, defeating its purpose; too large can over-weight obsolete early-policy transitions. 10k–100k is typical.</li>
+  <li><strong>Forgetting to detach the target.</strong> Gradients must <em>not</em> flow through <code>max_a' Q(s', a'; θ⁻)</code>. The <code>torch.no_grad()</code> block (or <code>.detach()</code>) is mandatory — omitting it is the single most common DQN bug.</li>
+  <li><strong>Bootstrapping past true terminals.</strong> Multiply the next-state value by <code>(1 − terminated)</code> so a terminal state contributes only its immediate reward.</li>
+  <li><strong>Over-estimation bias.</strong> The <code>max</code> operator systematically over-estimates Q-values. Double DQN (see §8) fixes this cheaply.</li>
+  <li><strong>γ too low.</strong> A small discount makes the agent myopic and unable to value long-horizon goals like reaching a distant FrozenLake cell. Use <code>γ ≈ 0.99</code>.</li>
+</ul>
+
+<!-- ============================================================= -->
+<h2 id="outcomes">7 · Mapping to learning outcomes</h2>
+<p>This project deliberately exercises a connected slice of the syllabus rather than a single session:</p>
+<table class="cmp">
+  <tr><th>Course session</th><th>Exercised in this project</th></tr>
+  <tr><td>S4 · Multi-Armed Bandits</td><td>ε-greedy exploration and the exploration–exploitation trade-off, reused in both agents.</td></tr>
+  <tr><td>S5–S6 · MDPs</td><td>Both tasks framed as ⟨𝒮,𝒜,P,R,γ⟩; states, actions, discounting.</td></tr>
+  <tr><td>S7 · Dynamic Programming</td><td>Bellman optimality equation — the fixed point both methods approximate.</td></tr>
+  <tr><td>S9 · Temporal Differences</td><td>The Q-learning TD update and TD error δ are the algorithmic core.</td></tr>
+  <tr><td>S10 · A First Practice</td><td>End-to-end implementation + comparison of methods on a task — exactly this deliverable.</td></tr>
+  <tr><td>S11 · Learning &amp; Planning</td><td>Both agents are model-free (learn from samples, no transition model).</td></tr>
+  <tr><td>S13 · RL Frameworks</td><td>Gymnasium environment API (<code>reset</code>/<code>step</code>); PyTorch for the network.</td></tr>
+  <tr><td>S15 · Approximation Methods</td><td>The leap from a table to an ANN value approximator <code>Q(s,a;θ)</code>.</td></tr>
+  <tr><td>S21 · Deep RL Practice</td><td>Replay buffer + target network + the DQN loss, end to end.</td></tr>
+</table>
+<p>Per the syllabus's assignment expectations (Session 10/21), the deliverable is a Python implementation plus an analysis of the results — the comparison table and curve discussion in §5 are that analysis.</p>
+
+<!-- ============================================================= -->
+<h2 id="extensions">8 · Extensions</h2>
+<ul class="ck">
+  <li><strong>Double DQN.</strong> Decouple action selection from evaluation to cut over-estimation:
+    <div class="math">a* = argmax<sub>a′</sub> Q(s′, a′; θ);&nbsp;&nbsp; y = r + γ&nbsp;(1−done)&nbsp;Q(s′, a*; θ⁻)</div>
+    A two-line change: pick the argmax with the online net, read its value from the target net.</li>
+  <li><strong>Dueling DQN.</strong> Split the head into a state-value stream V(s) and an advantage stream A(s,a), then recombine as <code>Q = V + (A − mean_a A)</code>. Learns which states are valuable independently of the action.</li>
+  <li><strong>Prioritised replay.</strong> Sample transitions with probability proportional to |TD error| so surprising transitions are replayed more often.</li>
+  <li><strong>Policy gradient (REINFORCE).</strong> Instead of learning values and acting greedily, parameterise π(a|s;θ) directly and ascend ∇<sub>θ</sub> 𝔼[G]. See the <a href="./policy-gradient.html">REINFORCE demo</a> and Session 16.</li>
+  <li><strong>A2C / Actor-Critic.</strong> Combine a policy (actor) with a learned value baseline (critic) to slash gradient variance — the natural next step (Session 17). See the <a href="./actor-critic.html">Actor-Critic demo</a>.</li>
+  <li><strong>Stochastic FrozenLake.</strong> Flip <code>is_slippery=True</code> and re-run the tabular agent: the optimal policy now hugs walls to avoid being blown into holes — a vivid lesson in planning under transition noise.</li>
+</ul>
+
+<!-- ============================================================= -->
+<h2 id="references">9 · References</h2>
+<ul class="ck">
+  <li>Sutton, R. S. &amp; Barto, A. G. (2018). <em>Reinforcement Learning: An Introduction</em>, 2nd ed. MIT Press. ISBN 9780262039246. — Ch. 6 (Temporal-Difference Learning, the Q-learning update), Ch. 3–4 (MDPs &amp; the Bellman optimality equation), Ch. 9 (on-policy prediction with approximation). The course's compulsory text.</li>
+  <li>Mnih, V. et&nbsp;al. (2015). "Human-level control through deep reinforcement learning." <em>Nature</em> 518, 529–533. — The DQN paper: replay buffer + target network.</li>
+  <li>van Hasselt, H., Guez, A. &amp; Silver, D. (2016). "Deep Reinforcement Learning with Double Q-learning." <em>AAAI</em>. — Double DQN.</li>
+  <li>Wang, Z. et&nbsp;al. (2016). "Dueling Network Architectures for Deep Reinforcement Learning." <em>ICML</em>.</li>
+  <li>Towers, M. et&nbsp;al. (2024). <em>Gymnasium</em> (the maintained successor to OpenAI Gym) — environment API used above.</li>
+</ul>
+
+<p style="margin-top:2rem"><a href="./course.html">← Course Outline</a> &nbsp;·&nbsp; <a href="./index.html">All Demos</a> &nbsp;·&nbsp; <a href="./dqn.html">DQN demo →</a></p>
+
+</main>
+
+<footer>
+  Worked-example project · built from the REINFORCE course materials · all code is real, runnable Python.
+</footer>
+
+</body>
+</html>
