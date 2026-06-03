@@ -96,6 +96,30 @@
   background:var(--bg-elev); border:1px solid var(--border); color:var(--text-dim); }
 .math .lhs { color:var(--accent3); }
 .toc-cards a.card h3 { color:var(--text); }
+
+/* enrichment blocks: pseudocode, worked example, pitfalls, takeaway, connects-to */
+.pseudo { background:#050811; border:1px solid var(--border); border-left:3px solid var(--accent3);
+  border-radius:0 8px 8px 0; padding:0.7rem 1rem; margin:0.8rem 0; font-family:var(--mono);
+  font-size:0.82rem; color:var(--text); white-space:pre-wrap; overflow-x:auto; line-height:1.5; }
+.pseudo .kw { color:var(--accent); } .pseudo .cm { color:var(--text-dim); }
+.worked { border-left:3px solid var(--success); background:rgba(45,212,191,0.05);
+  border-radius:0 8px 8px 0; padding:0.6rem 1rem; margin:0.8rem 0; font-size:0.9rem; }
+.worked b { color:var(--success); }
+.pitfall { border-left:3px solid var(--warn); background:rgba(245,158,11,0.06);
+  border-radius:0 8px 8px 0; padding:0.55rem 1rem; margin:0.7rem 0; font-size:0.88rem; }
+.pitfall b { color:var(--warn); }
+.connects { border-left:3px solid var(--accent3); background:rgba(255,92,138,0.05);
+  border-radius:0 8px 8px 0; padding:0.55rem 1rem; margin:0.7rem 0; font-size:0.88rem; }
+.connects b { color:var(--accent3); }
+.takeaway { font-size:0.9rem; margin:0.6rem 0 0.2rem; padding:0.5rem 0.9rem; border-radius:8px;
+  background:var(--bg-elev); border:1px dashed var(--border); }
+.takeaway b { color:var(--accent2); font-family:var(--mono); font-size:0.72rem;
+  text-transform:uppercase; letter-spacing:0.1em; }
+.rubric { width:100%; border-collapse:collapse; font-size:0.84rem; margin:0.6rem 0; }
+.rubric th, .rubric td { text-align:left; padding:0.4rem 0.6rem; border-bottom:1px solid var(--border); vertical-align:top; }
+.rubric th { font-family:var(--mono); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent2); }
+.rubric td:first-child { color:var(--text); font-weight:600; white-space:nowrap; }
+.rubric td { color:var(--text-dim); }
 </style>
 </head>
 <body>
@@ -180,6 +204,29 @@
     <a href="bandits.html" class="demo-link">demo&nbsp;link</a> — click through to run the algorithm yourself, tweak
     parameters, and watch the update rule shown on this page take effect in real time. Nothing is precomputed; every
     chart is a real algorithm running in your browser.
+  </div>
+
+  <div class="note">
+    <strong>Prerequisites &amp; how this course connects.</strong> RL sits at the meeting point of several earlier
+    BCSAI strands, and the course assumes a working grasp of each. From <em>probability &amp; statistics</em> you need
+    expectations, conditional probability, and variance — every value function is an expectation and most of the hard
+    engineering is variance control. From <em>linear algebra &amp; multivariate calculus</em> you need vectors, the
+    gradient, and the chain rule — these power function approximation and every policy-gradient update. From
+    <em>programming (Python)</em> you need NumPy fluency and comfort writing small simulations; assignments are Jupyter
+    notebooks or pure scripts. From <em>machine learning / deep learning</em> you need supervised learning, loss
+    functions, SGD, and the basics of neural nets — Deep RL (DQN, actor-critic) is "deep learning whose targets the
+    agent generates for itself". Looking forward, RL is the foundation for advanced electives in robotics, autonomous
+    systems, operations research, and the RLHF/preference-optimisation techniques behind modern language models.
+  </div>
+
+  <div class="callout">
+    <strong>Weekly study-load note.</strong> The official estimate is <b>3–8 h/week</b> (≈150 h over the semester for
+    6 ECTS). A realistic rhythm: ~1 h re-reading the matching Sutton &amp; Barto chapter <em>before</em> the session,
+    ~1–2 h consolidating notes and running the linked demo after it, and the rest absorbed by the four assignment
+    pushes (Temporal Differences S9, Actor-Critic S17, Deep RL S21, and the group project). Load is front-light and
+    back-heavy: expect calm foundational weeks (S1–S8) and intense implementation weeks around the assignments and the
+    final project. Because over half the workload (53.3%) is exercises/field work, the single highest-return habit is
+    to <em>code each algorithm yourself</em> rather than only reading it.
   </div>
 
   <!-- ===================== OBJECTIVES ===================== -->
@@ -326,6 +373,47 @@
     <li><b>Program rule.</b> Failing more than 18 ECTS in the year after the June/July re-sits leads to being asked to leave the program.</li>
   </ul>
 
+  <h3>Per-component rubric, deliverable format &amp; tips</h3>
+  <p class="muted">The criteria below interpret the syllabus's review-criteria language into concrete expectations. The professor reports the exact structure and review criteria for each specific job; treat this as the default standard.</p>
+  <table class="rubric">
+    <thead><tr><th>Component</th><th>What's assessed</th><th>Deliverable format</th><th>Tips to score well</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Individual Assignments (30%)</td>
+        <td>Correct implementation of the target algorithm; sound experimental design; clear analysis of results (learning curves, ablations); quality of written summary.</td>
+        <td>Python — Jupyter notebook or pure script (occasionally numba/cython for speed); a short write-up summarising approach, results, and interpretation. Delivered jointly within the dynamically-formed small group.</td>
+        <td>Make results reproducible (fix seeds, report variance over runs); plot a learning curve, not just a final number; explain <em>why</em> the curve looks as it does; acknowledge GenAI use explicitly with prompts.</td>
+      </tr>
+      <tr>
+        <td>Final Exam (30%)</td>
+        <td>Conceptual command of the whole course — definitions, when-to-use-which, and reasoning about algorithm behaviour. Most questions are drawn from the practice test-exams.</td>
+        <td>One formal, closed test (multiple-choice, true/false, open). No GenAI permitted during the exam.</td>
+        <td>Do every practice test-exam and track your improvement; be able to state each core update rule from memory and explain its bias/variance trade-off; rehearse "compare X vs Y" answers.</td>
+      </tr>
+      <tr>
+        <td>Participation (20%)</td>
+        <td>Coming prepared as to a company meeting; quality of contributions to discussions and in-class group interaction; inquisitiveness.</td>
+        <td>Continuous, across all 30 live in-person sessions; some discussions announced in advance and require preparation.</td>
+        <td>Read the mapped chapter beforehand; ask one specific question per session; meet the binding 80% attendance rule.</td>
+      </tr>
+      <tr>
+        <td>Group Assignment (10%)</td>
+        <td>An end-to-end RL project: problem framing, method choice and justification, implementation, evaluation, and limitations.</td>
+        <td>Group work; groups optimised from student-informed preferences. Code plus a project report.</td>
+        <td>Pick a problem that genuinely suits sequential decision-making; justify the method against simpler baselines; report honest failure modes.</td>
+      </tr>
+      <tr>
+        <td>Group Presentation (10%)</td>
+        <td>Clarity of communication; ability to defend design choices in Q&amp;A; visual and narrative quality.</td>
+        <td>Live presentation + discussion + Q&amp;A in sessions 29–30.</td>
+        <td>Lead with the framing and the result; show one compelling demo or plot; pre-empt the obvious "why not a simpler method?" question.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="note" style="font-size:0.86rem">
+    <strong>Ongoing-grading note.</strong> The syllabus's session scoring matrix concentrates assignment points on a few sessions — Individual Assignments on Temporal Differences (S9), Actor-Critic (S17) and Deep RL Practice (S21); the Group Assignment on Summary Recap (S22) and Presentations (S29); and the Test/Exam block on Session 28. The headline criteria weights (30/30/20/10/10) are what determine the final grade.
+  </div>
+
   <!-- ===================== PROGRAM ===================== -->
   <h2 id="program">Program — All 30 Sessions</h2>
   <p class="muted">
@@ -368,7 +456,8 @@
         </div>
         <div class="math"><span class="lhs">v<sub>π</sub>(s)</span> = E<sub>π</sub>[ G<sub>t</sub> | S<sub>t</sub> = s ]&nbsp;&nbsp;— the state-value function: expected return from <em>s</em> under policy π.</div>
         <div class="callout"><b>Key idea.</b> Value is "reward foresight": a state is good not for its immediate reward but for the stream of reward it leads to.</div>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 1 §1.7 — Early history of Reinforcement Learning.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Modern RL is the confluence of three historical streams — optimal control (Bellman), trial-and-error learning (Thorndike, law of effect), and temporal-difference prediction.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 1 §1.7 — Early history of Reinforcement Learning (and §1.1 for the agent-environment intuition).</div>
       </div>
 
       <div class="session">
@@ -380,21 +469,26 @@
           <div class="t"><b>Associative vs. non-associative —</b> whether the best action depends on the situation (associative / contextual) or not (the plain bandit).</div>
         </div>
         <div class="callout"><b>Key idea.</b> Evaluative feedback is what forces exploration: you can only judge an action relative to others by trying them.</div>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 1 §1.3 — Elements of Reinforcement Learning.</div>
+        <div class="takeaway"><b>Key takeaway</b> · The four elements — policy, reward signal, value function, and (optional) model — plus the evaluative/associative axes locate any RL setting in a single map.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 1 §1.3 — Elements of Reinforcement Learning (policy, reward, value, model).</div>
       </div>
 
       <div class="session">
         <div class="s-head"><span class="s-num">S04</span><h4>Multi-Armed Bandits</h4></div>
         <p class="s-obj"><b>Objective:</b> introduce (contextual) bandits as the basis for full RL and as immediately useful business tools.</p>
         <div class="s-topics">
-          <div class="t"><b>The k-armed bandit —</b> estimate action values Q(a) and balance exploiting the current best against exploring uncertain arms; ε-greedy, UCB, Thompson sampling, and gradient bandits.</div>
-          <div class="t"><b>Contextual bandits —</b> action value conditioned on a context — the bridge from bandits to states-and-policies.</div>
-          <div class="t"><b>Business "low-hanging fruit" —</b> A/B testing, ad selection, recommendation, and pricing as direct bandit applications.</div>
+          <div class="t"><b>The k-armed bandit —</b> on each step the agent picks one of k arms and receives a stochastic reward; the goal is to maximise total reward over many pulls. Because there are no states and no transitions, the bandit isolates the one ingredient that makes RL hard — <em>evaluative feedback under uncertainty</em>. The agent keeps a running estimate Q(a) of each arm's mean reward and must decide whether to pull the current best or gather more information about the rest.</div>
+          <div class="t"><b>Exploration strategies —</b> <em>ε-greedy</em> exploits the best arm but with probability ε picks at random; <em>UCB</em> adds an "optimism" bonus that shrinks as an arm is sampled; <em>Thompson sampling</em> keeps a posterior per arm and samples from it; <em>gradient bandits</em> learn action preferences via softmax. Each is a different answer to "how much should uncertainty be worth?".</div>
+          <div class="t"><b>Contextual bandits —</b> the action value is conditioned on an observed context x, so Q becomes Q(x,a). This is the bridge from bandits to full RL: add state-to-state transitions and a contextual bandit becomes an MDP.</div>
+          <div class="t"><b>Business "low-hanging fruit" —</b> A/B testing, ad and content selection, recommendation, and dynamic pricing are direct bandit applications where each "pull" is a user impression and the reward is a click or purchase.</div>
         </div>
         <div class="math"><span class="lhs">Q<sub>n+1</sub>(a)</span> = Q<sub>n</sub>(a) + α [ R<sub>n</sub> − Q<sub>n</sub>(a) ]&nbsp;&nbsp;·&nbsp;&nbsp;UCB: a<sub>t</sub> = argmax<sub>a</sub> [ Q(a) + c √(ln t / N(a)) ]</div>
+        <div class="worked"><b>Tiny worked example.</b> Two arms. Arm A pays 1 with prob 0.6, arm B with prob 0.5. Start Q(A)=Q(B)=0, α=0.5. Pull A, get reward 1: Q(A) ← 0 + 0.5·(1−0) = 0.5. Pull A again, get 0: Q(A) ← 0.5 + 0.5·(0−0.5) = 0.25. With UCB and few pulls of B, the √(ln t / N(B)) bonus keeps B's index high, forcing the agent to sample it before it can safely commit to A.</div>
+        <div class="pitfall"><b>Pitfall.</b> A constant step size α makes the estimate track a <em>non-stationary</em> arm (good for changing environments) but never fully converges; the sample-average 1/N(a) converges but adapts slowly. Choosing ε too small starves exploration; too large wastes reward forever.</div>
         <div class="callout"><b>Key idea.</b> Exploration is not waste — the √(ln t / N(a)) bonus shows that uncertainty itself has option value worth paying for.</div>
+        <div class="takeaway"><b>Key takeaway</b> · The bandit is RL stripped to its core dilemma; everything later (Q-values, ε-greedy, optimism) is this lesson generalised to states.</div>
         <a href="bandits.html" class="demo-link">▶ Demo: Multi-Armed Bandits</a>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 2 — Tabular Solution Methods: Multi-armed bandits.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 2 — Multi-armed Bandits. Core sections: §2.3 incremental sample-average, §2.6 UCB, §2.7 gradient bandits. The chapter's running 10-armed testbed is exactly what the linked demo recreates.</div>
       </div>
 
     </div>
@@ -416,13 +510,17 @@
         <div class="s-head"><span class="s-num">S05</span><h4>Graphs, Search, MDPs</h4></div>
         <p class="s-obj"><b>Objective:</b> understand the search space and its representation, the dimensions of heuristic search for prediction and control, and introduce Markov Decision Processes.</p>
         <div class="s-topics">
-          <div class="t"><b>Search spaces &amp; heuristics —</b> states as nodes, actions as edges; how informed search relates to value-based control.</div>
-          <div class="t"><b>Markov Decision Processes —</b> the tuple ⟨S, A, P, R, γ⟩ and the Markov property: the future depends only on the present state, not the path taken.</div>
+          <div class="t"><b>Search spaces &amp; heuristics —</b> a problem can be drawn as a graph with states as nodes and actions as edges; classical informed search (A*, best-first) uses a heuristic to estimate cost-to-go. RL generalises this: the value function <em>is</em> a learned, self-improving heuristic, and control means acting greedily with respect to it.</div>
+          <div class="t"><b>Markov Decision Processes —</b> the tuple ⟨S, A, P, R, γ⟩ formalises a sequential decision problem: state set S, action set A, transition kernel P(s′|s,a), reward R, and discount γ. The defining <em>Markov property</em> is that the next state and reward depend only on the current state-action pair, never on the path that led there.</div>
+          <div class="t"><b>Policies &amp; the two value functions —</b> a policy π(a|s) induces a state-value v<sub>π</sub>(s) and an action-value q<sub>π</sub>(s,a); the Bellman expectation equation makes each value a one-step lookahead over its own successors — a recursion that is the engine of every method that follows.</div>
         </div>
         <div class="math"><span class="lhs">v<sub>π</sub>(s)</span> = Σ<sub>a</sub> π(a|s) Σ<sub>s′,r</sub> p(s′,r | s,a) [ r + γ v<sub>π</sub>(s′) ]&nbsp;&nbsp;— the Bellman <em>expectation</em> equation.</div>
+        <div class="worked"><b>Tiny worked example.</b> A 2-state chain: from S0 action "go" moves to S1 (reward 0), S1 is terminal with reward +10, γ=0.9. Then v(S1)=10 and v(S0)=0 + 0.9·v(S1)=9. The single discount step turns a future +10 into a present value of 9 — that 0.9 factor is the whole reason "near rewards beat far rewards".</div>
+        <div class="connects"><b>Connects to.</b> A contextual bandit is an MDP with one step and no transitions; dynamic programming (S7) solves this equation exactly; TD (S9) samples it; function approximation (S15) replaces the table v(s) with a parameterised v̂(s,w).</div>
         <div class="callout"><b>Key idea.</b> The Markov property is what makes value functions well-defined and recursive — the present state is a sufficient statistic of history.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Almost everything in RL is an attempt to compute or approximate the solution of this one recursive equation.</div>
         <a href="mdp.html" class="demo-link">▶ Demo: MDPs &amp; Gridworld</a>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 3 — Finite Markov Decision Processes.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 3 — Finite Markov Decision Processes. Anchor sections: §3.1 the agent–environment interface, §3.5 policies and value functions, §3.6 optimal value functions. The "recycling robot" and gridworld examples motivate the formalism.</div>
       </div>
 
       <div class="session">
@@ -445,9 +543,22 @@
           <div class="t"><b>Generalized Policy Iteration (GPI) —</b> the unifying view: evaluation and improvement chasing each other to a fixed point.</div>
         </div>
         <div class="math"><span class="lhs">v<sub>k+1</sub>(s)</span> = max<sub>a</sub> Σ<sub>s′,r</sub> p(s′,r | s,a) [ r + γ v<sub>k</sub>(s′) ]&nbsp;&nbsp;— the Bellman <em>optimality</em> backup (value iteration).</div>
+        <div class="pseudo"><span class="cm"># Value iteration</span>
+<span class="kw">init</span> V(s) ← 0 for all s
+<span class="kw">repeat</span>
+    Δ ← 0
+    <span class="kw">for</span> each state s:
+        v ← V(s)
+        V(s) ← max_a Σ_s′,r  p(s′,r|s,a) · [ r + γ·V(s′) ]
+        Δ ← max(Δ, |v − V(s)|)
+<span class="kw">until</span> Δ &lt; θ           <span class="cm"># θ = small convergence threshold</span>
+π(s) ← argmax_a Σ_s′,r p(s′,r|s,a)·[ r + γ·V(s′) ]   <span class="cm"># extract greedy policy</span></div>
+        <div class="worked"><b>Tiny worked example.</b> Linear gridworld [ T(+1) | A | B ], γ=1, deterministic moves, reward 0 except entering T. Sweep 1: V(A)=max(go-right→V(B)=0)=0, V(B)=max(go-left→V(A)=0, go-right→T=+1)=1. Sweep 2: V(A)=max(→V(B)=1)=1. Values converge in two sweeps because information propagates one cell per sweep — exactly what the demo animates.</div>
+        <div class="pitfall"><b>Pitfall.</b> DP is exact but assumes a <em>perfect known model</em> p(s′,r|s,a) and visits every state every sweep — it does not scale to large or unknown environments (the "curse of dimensionality"). That limitation is the entire motivation for the sampling methods that follow.</div>
         <div class="callout"><b>Key idea.</b> DP needs a perfect model and sweeps every state — it is the gold-standard <em>planner</em> that all model-free learners try to approximate from samples.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Value iteration = repeatedly apply the optimality backup; policy iteration = alternate full evaluation with greedy improvement; GPI is the umbrella over both.</div>
         <a href="dp.html" class="demo-link">▶ Demo: Dynamic Programming</a>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 4 — Dynamic Programming.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 4 — Dynamic Programming. Key sections: §4.1 policy evaluation, §4.3 policy iteration, §4.4 value iteration, §4.6 Generalized Policy Iteration. Jack's-car-rental and gambler's-problem examples are the canonical DP exercises.</div>
       </div>
 
       <div class="session">
@@ -459,9 +570,13 @@
           <div class="t"><b>Merging with DP —</b> how MC and DP combine as two ends of the bias–variance spectrum.</div>
         </div>
         <div class="math"><span class="lhs">V(S<sub>t</sub>)</span> ← V(S<sub>t</sub>) + α [ G<sub>t</sub> − V(S<sub>t</sub>) ]&nbsp;&nbsp;·&nbsp;&nbsp;IS ratio ρ = Π<sub>k</sub> π(A<sub>k</sub>|S<sub>k</sub>) / b(A<sub>k</sub>|S<sub>k</sub>)</div>
+        <div class="worked"><b>Tiny worked example.</b> One episode visits S → reward sequence (+1, 0, +2) until termination, γ=1, so G = 3. With V(S)=0 and α=0.1: V(S) ← 0 + 0.1·(3−0) = 0.3. A second episode returning G=1 gives V(S) ← 0.3 + 0.1·(1−0.3) = 0.37 — the estimate drifts toward the average return, which is exactly what MC computes in the limit.</div>
+        <div class="pitfall"><b>Pitfall.</b> MC needs <em>complete</em> episodes, so it cannot be used in continuing tasks, and ordinary importance sampling can have <em>infinite variance</em> when the ratio ρ explodes; weighted IS is biased but far more stable in practice.</div>
+        <div class="connects"><b>Connects to.</b> MC and DP are the two extremes — MC samples a full return with no model and no bootstrap; DP bootstraps with a full model. TD (next session) sits exactly in between, and TD(λ) slides continuously along the line connecting them.</div>
         <div class="callout"><b>Key idea.</b> MC is unbiased but high-variance: it waits for the true return G<sub>t</sub> instead of guessing it — the opposite trade-off to TD.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Average actual returns = unbiased values, at the cost of high variance and an episodic-only restriction; importance sampling is what makes it work off-policy.</div>
         <a href="td.html" class="demo-link">▶ Demo: Monte Carlo &amp; TD</a>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 5 — Monte Carlo Methods; Importance Sampling.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 5 — Monte Carlo Methods. Anchor sections: §5.1 MC prediction, §5.3 MC control, §5.5 off-policy via importance sampling, §5.6 weighted importance sampling. The blackjack example runs through the whole chapter.</div>
       </div>
 
       <div class="session assign">
@@ -474,9 +589,22 @@
         </div>
         <div class="math"><span class="lhs">Q(s,a)</span> ← Q(s,a) + α [ r + γ max<sub>a′</sub> Q(s′,a′) − Q(s,a) ]&nbsp;&nbsp;— the Q-learning update (off-policy TD control).</div>
         <div class="math"><span class="lhs">TD(λ):</span>&nbsp; δ<sub>t</sub> = r<sub>t+1</sub> + γV(s<sub>t+1</sub>) − V(s<sub>t</sub>);&nbsp; e<sub>t</sub>(s) = γλ e<sub>t−1</sub>(s) + 𝟙[s=s<sub>t</sub>];&nbsp; V(s) ← V(s) + α δ<sub>t</sub> e<sub>t</sub>(s)</div>
+        <div class="pseudo"><span class="cm"># Q-learning (off-policy TD control)</span>
+<span class="kw">init</span> Q(s,a) arbitrarily; choose α, ε, γ
+<span class="kw">for</span> each episode:
+    s ← initial state
+    <span class="kw">while</span> s not terminal:
+        a ← ε-greedy(Q, s)                 <span class="cm"># behaviour policy explores</span>
+        take a, observe r, s′
+        Q(s,a) ← Q(s,a) + α·[ r + γ·max_a′ Q(s′,a′) − Q(s,a) ]
+        s ← s′                              <span class="cm"># target uses greedy max → off-policy</span></div>
+        <div class="worked"><b>Tiny worked example.</b> State s, action a, reward r=−1, γ=0.9, α=0.5. Currently Q(s,a)=2 and the best next value max Q(s′,·)=10. TD target = −1 + 0.9·10 = 8; error δ = 8 − 2 = 6; update Q(s,a) ← 2 + 0.5·6 = 5. The agent revised its estimate using a <em>guess</em> of the future (10) instead of waiting for the real return — that is bootstrapping.</div>
+        <div class="pitfall"><b>Pitfall.</b> On the cliff-walking task, Q-learning learns the optimal cliff-edge path but ε-greedy exploration occasionally falls off, so its <em>online</em> reward is worse than cautious SARSA — a classic illustration that "optimal policy" and "best behaviour while learning" differ.</div>
+        <div class="connects"><b>Connects to.</b> SARSA's update is the actor-critic critic in miniature; Q-learning's max becomes the DQN target (S21) once Q is a neural network; n-step and TD(λ) are the same idea that reappears as GAE in modern policy-gradient methods.</div>
         <div class="callout"><b>Key idea.</b> Bootstrapping trades variance for bias — TD can learn online, step-by-step, from incomplete episodes, which is why it is the workhorse of practical RL.</div>
+        <div class="takeaway"><b>Key takeaway</b> · TD = sampled experience + bootstrapped target; SARSA learns the policy it follows, Q-learning learns the greedy optimum regardless of how it explores.</div>
         <a href="td.html" class="demo-link">▶ Demo: SARSA / Q-Learning (Cliff Walking)</a>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 6 — Temporal-Difference Learning; Ch. 7 — n-step Bootstrapping.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 6 — Temporal-Difference Learning (§6.2 TD prediction, §6.4 SARSA, §6.5 Q-learning, §6.6 Expected SARSA); Ch. 7 — n-step Bootstrapping (§7.1–7.2). The cliff-walking example in §6.5 is precisely the demo.</div>
       </div>
 
     </div>
@@ -526,7 +654,17 @@
           <div class="t"><b>Neuro-Evolution / NEAT —</b> evolving the weights <em>and topology</em> of neural-network policies, and links to mainstream RL.</div>
         </div>
         <div class="math"><span class="lhs">x* ∈ Pareto</span> ⇔ ∄ x : (∀i fᵢ(x) ≥ fᵢ(x*)) ∧ (∃j fⱼ(x) &gt; fⱼ(x*))&nbsp;&nbsp;— non-dominance.</div>
+        <div class="pseudo"><span class="cm"># Generic genetic algorithm for policy search</span>
+population ← N random policies
+<span class="kw">repeat</span>
+    evaluate fitness(p) = episode return, for each p
+    parents ← select(population)            <span class="cm"># e.g. tournament / roulette</span>
+    children ← crossover(parents) then mutate(children)
+    population ← elitism(best) + children
+<span class="kw">until</span> budget exhausted</div>
+        <div class="worked"><b>Tiny worked example (Pareto).</b> Three policies scored on (speed, safety): A=(9,2), B=(5,5), C=(2,9). None dominates another — improving speed costs safety — so all three lie on the Pareto frontier, whereas D=(4,4) is dominated by B and is discarded. A multi-objective GA (e.g. NSGA-II) keeps the whole frontier rather than a single "best".</div>
         <div class="callout"><b>Key idea.</b> Evolution needs no gradient and no Markov assumption — it optimises whole policies by survival, which can succeed where backprop-through-reward struggles.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Gradient-free, embarrassingly parallel, and robust to sparse or non-differentiable rewards — the trade-off is sample inefficiency versus gradient-based RL.</div>
         <a href="evolution.html" class="demo-link">▶ Demo: Evolutionary Methods</a>
       </div>
 
@@ -588,7 +726,10 @@
           <div class="t"><b>Eligibility traces with approximation —</b> extending TD(λ) into the function-approximation setting.</div>
         </div>
         <div class="math"><span class="lhs">w</span> ← w + α [ U<sub>t</sub> − v̂(S<sub>t</sub>,w) ] ∇<sub>w</sub> v̂(S<sub>t</sub>,w)&nbsp;&nbsp;— semi-gradient value-function update.</div>
+        <div class="worked"><b>Tiny worked example.</b> Linear value v̂(s,w)=wᵀx(s) with feature x(s)=[1, s]. Suppose w=[0, 1], state s=3 so v̂=3, and a TD target U=5. Error = 5−3 = 2, gradient ∇<sub>w</sub>v̂ = x = [1,3]. With α=0.1: w ← [0,1] + 0.1·2·[1,3] = [0.2, 1.6]. One update nudges <em>every</em> state's prediction, not just s=3 — that is generalisation in action.</div>
+        <div class="pitfall"><b>Pitfall — the deadly triad.</b> Combine bootstrapping + off-policy training + function approximation and the value estimate can <em>diverge</em> to infinity even on tiny problems (Baird's counterexample). The "semi-gradient" name flags that we ignore the target's dependence on w, which is part of why stability is fragile.</div>
         <div class="callout"><b>Key idea.</b> Generalisation is double-edged: updating one state's value changes others — the "deadly triad" (bootstrapping + off-policy + approximation) can diverge.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Approximation buys scale and generalisation but forfeits the convergence guarantees of the tabular world — the rest of deep RL is about clawing stability back.</div>
         <a href="function-approx.html" class="demo-link">▶ Demo: Function Approximation</a>
         <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 9 §9.7 (Nonlinear/ANN approximation), Ch. 10, 11, 12 (Eligibility traces).</div>
       </div>
@@ -602,9 +743,18 @@
           <div class="t"><b>REINFORCE —</b> Monte Carlo policy gradient: scale ∇log π by the observed return.</div>
         </div>
         <div class="math"><span class="lhs">∇<sub>θ</sub>J(θ)</span> = E<sub>π</sub>[ ∇<sub>θ</sub> log π(a|s,θ) · G<sub>t</sub> ]&nbsp;&nbsp;— the policy gradient theorem (REINFORCE estimator).</div>
+        <div class="pseudo"><span class="cm"># REINFORCE (Monte Carlo policy gradient)</span>
+<span class="kw">for</span> each episode generated with π(·|·,θ):
+    observe trajectory s₀,a₀,r₁, … , s_{T−1},a_{T−1},r_T
+    <span class="kw">for</span> t = 0 … T−1:
+        G_t ← Σ_{k=t}^{T−1} γ^{k−t} · r_{k+1}      <span class="cm"># return from step t</span>
+        θ ← θ + α · γ^t · G_t · ∇_θ log π(a_t | s_t, θ)</div>
+        <div class="worked"><b>Tiny worked example.</b> Two actions with softmax preferences; currently π(left)=0.5. An episode where we took <em>left</em> returns G=+4. The update multiplies ∇log π(left) by +4, raising π(left) on the next pass; had the same action returned −4, the identical gradient would be scaled negative and π(left) would fall. The sign and size of the return <em>are</em> the learning signal.</div>
+        <div class="pitfall"><b>Pitfall.</b> The plain REINFORCE estimator is unbiased but <em>extremely high variance</em> — returns vary wildly between episodes. Subtracting a state-dependent baseline b(s) (typically V(s)) leaves the gradient unbiased but slashes variance; this baseline is exactly the critic introduced next session.</div>
         <div class="callout"><b>Key idea.</b> Push up the log-probability of actions that led to high return and down those that didn't — no value function strictly required, but variance is high.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Optimise the policy directly by gradient ascent on expected return — works in continuous action spaces where value-based argmax is intractable, but needs variance reduction to be practical.</div>
         <a href="policy-gradient.html" class="demo-link">▶ Demo: Policy Gradients (REINFORCE)</a>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 13 — Policy Gradient Methods.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 13 — Policy Gradient Methods. Anchor sections: §13.1 policy parameterisation, §13.2 the policy gradient theorem, §13.3 REINFORCE, §13.4 REINFORCE with baseline.</div>
       </div>
 
       <div class="session assign">
@@ -616,9 +766,19 @@
           <div class="t"><b>Main algorithms —</b> A2C/A3C and pointers to PPO as the modern, stable successor.</div>
         </div>
         <div class="math"><span class="lhs">θ</span> ← θ + α ∇<sub>θ</sub> log π(a|s,θ) · Â,&nbsp;&nbsp;with&nbsp; Â = r + γV(s′) − V(s)&nbsp;&nbsp;— A2C advantage update.</div>
+        <div class="pseudo"><span class="cm"># One-step Actor-Critic (A2C core)</span>
+<span class="kw">init</span> actor θ, critic w
+<span class="kw">for</span> each step (s, a, r, s′):
+    δ ← r + γ·V(s′,w) − V(s,w)        <span class="cm"># TD error = advantage estimate Â</span>
+    w ← w + α_w · δ · ∇_w V(s,w)       <span class="cm"># critic: reduce TD error</span>
+    θ ← θ + α_θ · δ · ∇_θ log π(a|s,θ) <span class="cm"># actor: push policy toward good Â</span></div>
+        <div class="worked"><b>Tiny worked example.</b> Critic says V(s)=2, V(s′)=5; observed r=1, γ=0.9. Advantage Â = 1 + 0.9·5 − 2 = 3.5 &gt; 0, so the action was better than the critic expected → the actor increases its probability and the critic raises V(s) toward the target 5.5. A negative Â would push the action's probability down instead.</div>
+        <div class="pitfall"><b>Pitfall.</b> Actor and critic chase a moving target each other defines; if the critic learns too slowly the advantage is noisy, if the actor moves too fast the policy collapses. Stable modern variants (PPO) add a clipped objective to bound how far the policy can shift per update.</div>
+        <div class="connects"><b>Connects to.</b> The critic's δ is exactly the TD error from S9; the actor's update is REINFORCE from S16 with G<sub>t</sub> replaced by Â. Actor-critic is literally the marriage of the previous two sessions.</div>
         <div class="callout"><b>Key idea.</b> The critic turns REINFORCE's noisy full-episode return into a one-step bootstrap estimate — dramatically lower variance, faster learning.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Actor proposes, critic evaluates; the advantage Â=Q−V is the low-variance, zero-bias signal that makes policy gradients practical at scale.</div>
         <a href="actor-critic.html" class="demo-link">▶ Demo: Actor-Critic (A2C)</a>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 13 §13.5 — Actor-Critic methods.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 13 §13.5 — Actor-Critic methods (and §13.6 for the continuing-task / average-reward form).</div>
       </div>
 
       <div class="session">
@@ -664,7 +824,10 @@
           <div class="t"><b>Offline RL —</b> learning a policy purely from a fixed dataset, with no further environment interaction.</div>
           <div class="t"><b>Inverse RL —</b> inferring an agent's reward/objectives by observing its behaviour; links to behavioural cloning and imitation learning.</div>
         </div>
+        <div class="math"><span class="lhs">IRL goal:</span>&nbsp; find R such that&nbsp; E<sub>π*</sub>[ Σ γ<sup>t</sup> R(s<sub>t</sub>) ] ≥ E<sub>π</sub>[ Σ γ<sup>t</sup> R(s<sub>t</sub>) ]&nbsp; ∀π&nbsp;&nbsp;— the expert's policy should look optimal under the recovered reward.</div>
+        <div class="pitfall"><b>Pitfall.</b> Behavioural cloning copies the expert's action mapping but suffers <em>distribution shift</em> — once the agent drifts off the demonstrated states it has never learned to recover, and errors compound. IRL is more robust because it recovers <em>why</em> the expert acted, but it is ill-posed (many rewards explain the same behaviour).</div>
         <div class="callout"><b>Key idea.</b> Inverse RL flips the problem — instead of "given rewards, find behaviour", it asks "given behaviour, recover the rewards" — the basis for learning from demonstration.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Model-based plans inside a learned model, offline RL learns from a fixed log with no interaction, and inverse RL/imitation learns the objective itself from demonstrations — three answers to "what if real interaction is scarce or dangerous?".</div>
       </div>
 
       <div class="session assign">
@@ -675,7 +838,19 @@
           <div class="t"><b>From pixels to policy —</b> the trio of tricks that made Atari-from-pixels work.</div>
         </div>
         <div class="math"><span class="lhs">L(θ)</span> = E[ ( r + γ max<sub>a′</sub> Q(s′,a′; θ⁻) − Q(s,a; θ) )² ]&nbsp;&nbsp;— DQN loss; θ⁻ is the frozen target network.</div>
+        <div class="pseudo"><span class="cm"># Deep Q-Network (DQN) training loop</span>
+<span class="kw">init</span> Q-net θ, target θ⁻ ← θ, replay buffer D
+<span class="kw">for</span> each step:
+    a ← ε-greedy(Q_θ, s);  take a, observe r, s′
+    store (s, a, r, s′) in D
+    sample minibatch (s,a,r,s′) ~ D            <span class="cm"># replay → decorrelate</span>
+    y ← r + γ·max_a′ Q(s′,a′; θ⁻)              <span class="cm"># target uses frozen θ⁻</span>
+    θ ← θ − η·∇_θ ( y − Q(s,a; θ) )²
+    every C steps: θ⁻ ← θ                       <span class="cm"># refresh target net</span></div>
+        <div class="worked"><b>Tiny worked example.</b> Transition (s,a,r=1,s′), γ=0.99, target net gives max Q(s′,·;θ⁻)=10, online net Q(s,a;θ)=4. Target y = 1 + 0.99·10 = 10.9; squared-error loss = (10.9−4)² = 47.6; the gradient step nudges Q(s,a;θ) up toward 10.9. Crucially y is computed from the <em>frozen</em> θ⁻, so the target doesn't move while we fit it.</div>
+        <div class="pitfall"><b>Pitfall.</b> The max operator makes vanilla DQN <em>overestimate</em> action values (maximisation bias); Double DQN fixes this by selecting the action with θ but evaluating it with θ⁻. Too-frequent target updates re-introduce the chasing-its-own-tail instability; too-infrequent slows learning.</div>
         <div class="callout"><b>Key idea.</b> Replay decorrelates samples and the target network stops the regression "chasing its own tail" — the two fixes that tamed the deadly triad enough to learn from pixels.</div>
+        <div class="takeaway"><b>Key takeaway</b> · DQN = Q-learning with a neural Q-function, made stable by experience replay + a frozen target network; Rainbow (S22) stacks several further fixes on top.</div>
         <a href="dqn.html" class="demo-link">▶ Demo: Deep Q-Networks</a>
         <a href="function-approx.html" class="demo-link">▶ Demo: Function Approximation</a>
       </div>
@@ -712,8 +887,11 @@
           <div class="t"><b>New approaches —</b> reward shaping, finite-automata / reward-machine rewards, and hierarchical RL (options, sub-goals).</div>
           <div class="t"><b>Paper discussion —</b> reading methodology and critically appraising results.</div>
         </div>
+        <div class="math"><span class="lhs">R′(s,a,s′)</span> = R(s,a,s′) + γΦ(s′) − Φ(s)&nbsp;&nbsp;— potential-based shaping: leaves the optimal policy unchanged while densifying reward.</div>
         <div class="callout"><b>Key idea.</b> Reward design is often the highest-leverage choice in an RL project — shaping and structured rewards can make an intractable problem learnable.</div>
-        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 17 — Frontiers.</div>
+        <div class="pitfall"><b>Pitfall.</b> Naïve bonus rewards invite <em>reward hacking</em> — the agent maximises the proxy, not the goal (e.g. looping to farm a shaping bonus). Potential-based shaping is the one form provably safe from changing the optimum.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Hierarchical RL, reward machines, and shaping all attack the same bottleneck — sparse, long-horizon reward — by injecting structure the raw MDP lacks.</div>
+        <div class="s-reading"><b>Reading:</b> Sutton &amp; Barto, Ch. 17 — Frontiers (§17.1 general value functions &amp; auxiliary tasks, §17.4 designing reward signals).</div>
       </div>
 
       <div class="session">
@@ -742,7 +920,9 @@
           <div class="t"><b>MARL dynamics —</b> cooperation, competition, and mixed settings; the environment becomes non-stationary as other agents learn.</div>
           <div class="t"><b>Game-theoretic lens —</b> iterated games (e.g. the Axelrod tournament / iterated prisoner's dilemma): Tit-for-Tat, Always Defect, Grim, Pavlov.</div>
         </div>
+        <div class="worked"><b>Tiny worked example.</b> Iterated prisoner's dilemma payoffs (mutual cooperate 3/3, mutual defect 1/1, sucker/temptation 0/5). Two Tit-for-Tat agents lock into cooperate–cooperate (3 each per round); a Tit-for-Tat meeting Always-Defect loses the first round then matches defection, settling at 1 each. The demo's Axelrod tournament shows why reciprocal, forgiving strategies dominate over many rounds.</div>
         <div class="callout"><b>Key idea.</b> With multiple learners the ground shifts under each agent — convergence guarantees from single-agent RL no longer hold, and equilibria replace optima.</div>
+        <div class="takeaway"><b>Key takeaway</b> · Non-stationarity is the central MARL difficulty; solution concepts borrow from game theory (Nash equilibria) rather than single-agent optimality.</div>
         <a href="multi-agent.html" class="demo-link">▶ Demo: Multi-Agent RL</a>
       </div>
 
@@ -804,7 +984,7 @@
 
   <!-- ===================== KEY CONCEPTS ===================== -->
   <h2 id="concepts">Key Concepts — Glossary</h2>
-  <p class="muted">A quick-reference glossary of the ~30 core terms used throughout the course. Notation: <code>s</code> state, <code>a</code> action, <code>r</code> reward, <code>γ</code> discount, <code>π</code> policy, <code>α</code> step size.</p>
+  <p class="muted">A quick-reference glossary of the ~50 core terms used throughout the course, ordered roughly from foundations to advanced methods. Notation: <code>s</code> state, <code>a</code> action, <code>r</code> reward, <code>γ</code> discount, <code>π</code> policy, <code>α</code> step size, <code>θ/w</code> parameters.</p>
   <dl class="glossary">
     <div class="term"><dt>Agent / Environment</dt><dd>The learner/decision-maker and everything it interacts with. They exchange actions, states, and rewards in a loop.</dd></div>
     <div class="term"><dt>Policy π(a|s)</dt><dd>A mapping from states to a probability distribution over actions — the agent's behaviour.</dd></div>
@@ -840,7 +1020,32 @@
     <div class="term"><dt>Inverse RL / Imitation</dt><dd>Recovering the reward function (IRL) or copying behaviour (behavioural cloning) from observed demonstrations.</dd></div>
     <div class="term"><dt>Pareto frontier / NEAT</dt><dd>The set of non-dominated trade-offs in multi-objective optimisation; NEAT evolves neural-net weights and topology.</dd></div>
     <div class="term"><dt>Multi-Agent RL (MARL)</dt><dd>RL with several simultaneously-learning agents, making the environment non-stationary; analysed via game theory.</dd></div>
-    <div class="term"><dt>Reward shaping</dt><dd>Adding auxiliary reward terms to guide learning toward sparse-reward goals without changing the optimal policy.</dd></div>
+    <div class="term"><dt>Reward shaping</dt><dd>Adding auxiliary reward terms to guide learning toward sparse-reward goals without changing the optimal policy (potential-based shaping is provably policy-preserving).</dd></div>
+    <div class="term"><dt>Trajectory / Episode</dt><dd>A trajectory is a sequence s₀,a₀,r₁,s₁,…; an episode is a trajectory that ends in a terminal state. Episodic tasks reset; continuing tasks never terminate.</dd></div>
+    <div class="term"><dt>Horizon</dt><dd>How far into the future returns are accumulated — finite (fixed length), infinite-discounted (via γ), or average-reward.</dd></div>
+    <div class="term"><dt>Stationary vs. non-stationary</dt><dd>Whether the environment's dynamics/rewards change over time; non-stationarity favours constant step sizes and is intrinsic to multi-agent settings.</dd></div>
+    <div class="term"><dt>Stochastic vs. deterministic policy</dt><dd>A stochastic policy outputs a distribution over actions (needed for exploration and continuous control); a deterministic one outputs a single action.</dd></div>
+    <div class="term"><dt>Greedy / ε-greedy action</dt><dd>Greedy picks argmax<sub>a</sub> Q(s,a); ε-greedy does so with probability 1−ε and explores at random with probability ε.</dd></div>
+    <div class="term"><dt>Softmax / Boltzmann policy</dt><dd>π(a|s) ∝ exp(preference/τ): a temperature-controlled smooth alternative to ε-greedy, and the policy form used by policy-gradient methods.</dd></div>
+    <div class="term"><dt>Bellman optimality equation</dt><dd>v*(s) = max<sub>a</sub> Σ p(s′,r|s,a)[r+γv*(s′)] — the fixed-point characterising the best achievable value.</dd></div>
+    <div class="term"><dt>Value vs. policy iteration</dt><dd>Two DP schemes: value iteration applies the optimality backup directly; policy iteration alternates full evaluation with greedy improvement.</dd></div>
+    <div class="term"><dt>Backup diagram</dt><dd>A small tree picturing how value flows from successor states/actions back to the current node — the visual form of a Bellman update.</dd></div>
+    <div class="term"><dt>TD error δ</dt><dd>δ = r + γV(s′) − V(s): the surprise between a bootstrapped target and the current estimate; the learning signal for TD and the critic.</dd></div>
+    <div class="term"><dt>n-step return</dt><dd>A target using n real rewards then bootstrapping: interpolates between one-step TD (n=1) and Monte Carlo (n=∞).</dd></div>
+    <div class="term"><dt>Maximisation bias</dt><dd>The systematic overestimation introduced by the max operator in Q-learning/DQN; mitigated by Double Q-learning.</dd></div>
+    <div class="term"><dt>Semi-gradient methods</dt><dd>Function-approximation updates that ignore the target's dependence on the parameters — efficient but a source of instability.</dd></div>
+    <div class="term"><dt>Tile coding / RBF features</dt><dd>Classic fixed feature representations for linear function approximation, partitioning the state space into overlapping regions.</dd></div>
+    <div class="term"><dt>Generalized Advantage Estimation</dt><dd>A λ-weighted blend of n-step advantage estimates that trades bias for variance — the modern policy-gradient standard.</dd></div>
+    <div class="term"><dt>PPO / TRPO</dt><dd>Trust-region / clipped-objective policy-gradient methods that bound how far the policy may move per update for stable training.</dd></div>
+    <div class="term"><dt>A3C / A2C</dt><dd>Asynchronous (A3C) and synchronous (A2C) advantage actor-critic — parallel actors feeding a shared advantage-based update.</dd></div>
+    <div class="term"><dt>Rainbow</dt><dd>A DQN agent combining six orthogonal improvements (Double, Dueling, Prioritised Replay, Distributional, Noisy Nets, n-step).</dd></div>
+    <div class="term"><dt>Offline (batch) RL</dt><dd>Learning a policy purely from a fixed dataset with no further interaction; the central challenge is distributional shift.</dd></div>
+    <div class="term"><dt>Behavioural cloning</dt><dd>Supervised imitation that maps expert states to actions; simple but brittle to compounding distribution shift.</dd></div>
+    <div class="term"><dt>Hierarchical RL / options</dt><dd>Temporally-extended sub-policies ("options") that let an agent plan over abstract, multi-step actions toward sub-goals.</dd></div>
+    <div class="term"><dt>Reward hacking</dt><dd>An agent maximising a flawed proxy reward in unintended ways instead of the designer's true objective.</dd></div>
+    <div class="term"><dt>Sample efficiency</dt><dd>How much environment interaction a method needs to reach a given performance — a key axis distinguishing RL algorithms.</dd></div>
+    <div class="term"><dt>Sim-to-real transfer</dt><dd>Carrying a policy trained in simulation over to the real world despite the "reality gap"; aided by domain randomisation.</dd></div>
+    <div class="term"><dt>Credit assignment</dt><dd>Attributing a delayed outcome to the earlier actions responsible for it — the core difficulty eligibility traces and advantages address.</dd></div>
   </dl>
 
   <!-- ===================== BIBLIOGRAPHY ===================== -->
