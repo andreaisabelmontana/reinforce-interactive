@@ -1,42 +1,24 @@
-// Function Approximation — 1D regression with different bases
+// Function Approximation — 1D regression with different bases.
+//
+// The feature bases (poly/RBF/tile/Fourier) and the semi-gradient linear SGD
+// update come from the unit-tested module src/function-approx.js, so the demo
+// runs the verified code. The TinyNN option is browser-only and lives here.
 'use strict';
+
+import {
+  X_MIN, X_MAX, trueV,
+  polyFeat, rbfFeat, tileFeat, fourierFeat,
+  LinearVFA,
+} from '../src/function-approx.js';
+import { RNG } from '../src/rng.js';
+import { Loop } from './ui.js';
+
+const rng = new RNG((Date.now() & 0x7fffffff) || 1);
+const randn = () => rng.normal();
 
 (function(){
 
-const X_MIN = -1, X_MAX = 1;
-function trueV(s) { return Math.sin(3 * s) + 0.3 * s; }
-function sampleX() { return X_MIN + Math.random() * (X_MAX - X_MIN); }
-
-// Features
-function polyFeat(s, n) { const f = new Array(n); let p = 1; for (let i = 0; i < n; i++) { f[i] = p; p *= s; } return f; }
-function rbfFeat(s, n) {
-  const f = new Array(n);
-  const sigma = (X_MAX - X_MIN) / Math.max(2, n - 1);
-  for (let i = 0; i < n; i++) {
-    const c = X_MIN + i * (X_MAX - X_MIN) / Math.max(1, n - 1);
-    f[i] = Math.exp(-Math.pow(s - c, 2) / (2 * sigma * sigma));
-  }
-  return f;
-}
-function tileFeat(s, nTilings) {
-  // nTilings overlapping, each with 8 tiles. Returns size nTilings * 8
-  const tilesPerT = 8;
-  const range = X_MAX - X_MIN;
-  const tileW = range / tilesPerT;
-  const f = new Array(nTilings * tilesPerT).fill(0);
-  for (let t = 0; t < nTilings; t++) {
-    const offset = (t / nTilings) * tileW;
-    const idx = Math.floor((s - X_MIN + offset) / tileW) % tilesPerT;
-    f[t * tilesPerT + ((idx + tilesPerT) % tilesPerT)] = 1;
-  }
-  return f;
-}
-function fourierFeat(s, n) {
-  const sn = (s - X_MIN) / (X_MAX - X_MIN);
-  const f = new Array(n);
-  for (let i = 0; i < n; i++) f[i] = Math.cos(Math.PI * i * sn);
-  return f;
-}
+function sampleX() { return X_MIN + rng.random() * (X_MAX - X_MIN); }
 
 // Tiny neural net: 1 -> H -> 1 (tanh)
 class TinyNN {
@@ -81,7 +63,8 @@ class TinyNN {
 
 let basis = 'rbf';
 let nF = 20;
-let w = [];
+let vfa = null;       // tested LinearVFA for the linear bases
+let w = [];           // mirror of vfa.w (read by the RBF feature visualisation)
 let nn = null;
 let nSeen = 0;
 let mseHistory = [];
@@ -98,9 +81,7 @@ function getFeat(s) {
 
 function predict(s) {
   if (basis === 'nn') return nn.forward(s).y;
-  const f = getFeat(s);
-  let y = 0; for (let i = 0; i < f.length; i++) y += w[i] * f[i];
-  return y;
+  return vfa.predict(s);
 }
 
 function reset() {
@@ -109,9 +90,9 @@ function reset() {
   if (basis === 'nn') {
     nn = new TinyNN(Math.max(2, Math.min(64, nF)));
   } else {
-    // determine dimension via dummy feature call
     const dim = getFeat(0).length;
-    w = new Array(dim).fill(0);
+    vfa = new LinearVFA(getFeat, dim);
+    w = vfa.w;
   }
   nSeen = 0; mseHistory = []; samples = [];
   redraw(); updateStats();
@@ -120,22 +101,13 @@ function reset() {
 function trainBatch(n) {
   const alpha = parseFloat(document.getElementById('alpha').value);
   const noise = parseFloat(document.getElementById('noise').value);
-  let sse = 0;
   for (let i = 0; i < n; i++) {
     const s = sampleX();
     const target = trueV(s) + noise * randn();
     if (basis === 'nn') {
-      sse += nn.step(s, target, alpha);
+      nn.step(s, target, alpha);
     } else {
-      const f = getFeat(s);
-      let y = 0; for (let j = 0; j < f.length; j++) y += w[j] * f[j];
-      const err = y - target;
-      // weight clamp for poly stability
-      for (let j = 0; j < f.length; j++) {
-        w[j] -= alpha * err * f[j];
-        if (Math.abs(w[j]) > 50) w[j] = Math.sign(w[j]) * 50;
-      }
-      sse += err * err;
+      vfa.update(s, target, alpha); // tested semi-gradient SGD step
     }
     samples.push({ x: s, y: target });
     if (samples.length > MAX_SAMPLES) samples.shift();

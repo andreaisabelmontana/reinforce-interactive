@@ -1,5 +1,17 @@
-// Multi-Armed Bandits — interactive demo
+// Multi-Armed Bandits — interactive demo.
+//
+// The core estimators and the ε-greedy / UCB / greedy / optimistic selection
+// rules mirror the unit-tested module src/bandit.js. This file adds the
+// gradient-bandit and Thompson-sampling variants plus all the canvas rendering.
 'use strict';
+
+import { RNG, argmax, argmaxTies, softmax } from '../src/rng.js';
+import { Loop } from './ui.js';
+
+const rng = new RNG((Date.now() & 0x7fffffff) || 1);
+const randn = () => rng.normal();
+const sampleCategorical = (probs) => rng.categorical(probs);
+const fmt = (n, d = 2) => (typeof n === 'number' && isFinite(n)) ? n.toFixed(d) : '—';
 
 (function () {
 

@@ -1,0 +1,11 @@
+{
+  "name": "reinforce-interactive",
+  "version": "1.0.0",
+  "description": "Tested RL algorithm cores behind the REINFORCE interactive playground.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

@@ -1,5 +1,16 @@
 // MC + TD learning on gridworld (cliff walk by default)
+//
+// The TD control updates (Q-learning, SARSA, Expected SARSA) come from the
+// unit-tested module src/td.js, so the demo runs exactly the verified code.
+// This file keeps the canvas rendering, trajectory overlay and controls.
 'use strict';
+
+import { Gridworld, CELL, makeCliffGrid, makeDefaultGrid, drawGrid } from './gridworld.js';
+import { trainEpisode as tdTrainEpisode, policyFromQ as tdPolicyFromQ } from '../src/td.js';
+import { RNG, argmaxTies, argmax } from '../src/rng.js';
+import { Loop } from './ui.js';
+
+const rng = new RNG((Date.now() & 0x7fffffff) || 1);
 
 (function(){
 
@@ -52,82 +63,76 @@ function syncParams() {
 }
 
 function pickEpsGreedy(r, c, eps) {
-  if (Math.random() < eps) return Math.floor(Math.random()*4);
-  return argmaxTies(Q[r][c]);
+  if (rng.random() < eps) return rng.int(4);
+  return argmaxTies(Q[r][c], rng);
+}
+
+// Every-visit Monte Carlo control — kept here because the demo offers an MC
+// option that the TD module (TD-only) does not implement.
+function mcEpisode(alpha, eps) {
+  const gamma = gw.gamma;
+  let s = { ...gw.start };
+  let a = pickEpsGreedy(s.r, s.c, eps);
+  let G = 0, steps = 0;
+  const traj = [{ ...s }];
+  const episode = [];
+  while (steps < 500) {
+    const t = gw.sample(s.r, s.c, a, rng);
+    const sNext = { r: t.r1, c: t.c1 };
+    episode.push({ s, a, r: t.reward });
+    G += Math.pow(gamma, steps) * t.reward;
+    traj.push({ ...sNext });
+    steps++;
+    s = sNext;
+    if (t.done) break;
+    a = pickEpsGreedy(s.r, s.c, eps);
+  }
+  let Gt = 0;
+  for (let i = episode.length - 1; i >= 0; i--) {
+    const { s: si, a: ai, r: ri } = episode[i];
+    Gt = ri + gamma * Gt;
+    Q[si.r][si.c][ai] += alpha * (Gt - Q[si.r][si.c][ai]);
+  }
+  return { G, steps, traj };
+}
+
+// Build a trajectory by following the current greedy policy (display only).
+function greedyTrajectory() {
+  let s = { ...gw.start };
+  const traj = [{ ...s }];
+  for (let i = 0; i < 200; i++) {
+    if (gw.isTerminal(s.r, s.c)) break;
+    const t = gw.sample(s.r, s.c, argmax(Q[s.r][s.c]), rng);
+    s = { r: t.r1, c: t.c1 };
+    traj.push({ ...s });
+    if (t.done) break;
+  }
+  return traj;
 }
 
 function trainEpisode() {
   const alg = document.getElementById('alg').value;
   const alpha = parseFloat(document.getElementById('alpha').value);
   const eps   = parseFloat(document.getElementById('eps').value);
-  const gamma = gw.gamma;
 
-  let s = {...gw.start};
-  let a = pickEpsGreedy(s.r, s.c, eps);
-  let G = 0, steps = 0;
-  const traj = [{...s}];
-  const episode = []; // for MC
-
-  while (steps < 500) {
-    const t = gw.sample(s.r, s.c, a);
-    let aNext = -1;
-    const sNext = {r: t.r1, c: t.c1};
-    if (!t.done) aNext = pickEpsGreedy(sNext.r, sNext.c, eps);
-
-    if (alg === 'qlearn') {
-      const target = t.done ? t.reward : t.reward + gamma * Math.max(...Q[sNext.r][sNext.c]);
-      Q[s.r][s.c][a] += alpha * (target - Q[s.r][s.c][a]);
-    } else if (alg === 'sarsa') {
-      const target = t.done ? t.reward : t.reward + gamma * Q[sNext.r][sNext.c][aNext];
-      Q[s.r][s.c][a] += alpha * (target - Q[s.r][s.c][a]);
-    } else if (alg === 'esarsa') {
-      // Expected SARSA with ε-greedy policy
-      let expected = 0;
-      if (!t.done) {
-        const qs = Q[sNext.r][sNext.c];
-        const greedy = argmaxTies(qs);
-        for (let i = 0; i < 4; i++) {
-          const p = (i === greedy ? 1 - eps : 0) + eps / 4;
-          expected += p * qs[i];
-        }
-      }
-      const target = t.done ? t.reward : t.reward + gamma * expected;
-      Q[s.r][s.c][a] += alpha * (target - Q[s.r][s.c][a]);
-    } else if (alg === 'mc') {
-      episode.push({s, a, r: t.reward});
-    }
-
-    G += Math.pow(gamma, steps) * t.reward;
-    traj.push({...sNext});
-    steps++;
-    s = sNext; a = aNext;
-    if (t.done) break;
-    if (a < 0) a = pickEpsGreedy(s.r, s.c, eps);
-  }
-
-  // MC update at episode end (every-visit)
+  let out;
   if (alg === 'mc') {
-    let Gt = 0;
-    for (let i = episode.length - 1; i >= 0; i--) {
-      const { s: si, a: ai, r: ri } = episode[i];
-      Gt = ri + gamma * Gt;
-      Q[si.r][si.c][ai] += alpha * (Gt - Q[si.r][si.c][ai]);
-    }
+    const m = mcEpisode(alpha, eps);
+    out = { G: m.G, steps: m.steps };
+    lastTrajectory = m.traj;
+  } else {
+    // Q-learning / SARSA / Expected SARSA from the tested src/td.js core.
+    out = tdTrainEpisode(gw, Q, rng, { alg, alpha, eps, maxSteps: 500 });
+    lastTrajectory = greedyTrajectory();
   }
 
   episodeCount++;
-  returns.push(G);
-  lastTrajectory = traj;
-  return { G, steps };
+  returns.push(out.G);
+  return out;
 }
 
 function policyFromQ() {
-  const p = Array.from({length: gw.rows}, () => new Array(gw.cols).fill(-1));
-  for (let r=0; r<gw.rows; r++) for (let c=0; c<gw.cols; c++) {
-    if (gw.isWall(r,c) || gw.isTerminal(r,c) || gw.isCliff(r,c)) continue;
-    p[r][c] = argmax(Q[r][c]);
-  }
-  return p;
+  return tdPolicyFromQ(gw, Q);
 }
 
 function redraw() {

@@ -102,8 +102,12 @@
 <footer>built from the REINFORCE course · 100% client-side</footer>
 
 <script src="js/common.js"></script>
-<script src="js/gridworld.js"></script>
-<script>
+<script type="module">
+// DP backups (value/policy iteration) come from the unit-tested module
+// src/dp.js, exercised one sweep at a time so the demo can animate convergence.
+import { makeDefaultGrid, drawGrid, bindGridEditor } from './js/gridworld.js';
+import { actionValue as dpActionValue, greedyPolicy as dpGreedyPolicy } from './src/dp.js';
+
 (function(){
   let gw = makeDefaultGrid(5, 7);
   const cellSize = 64;
@@ -116,23 +120,8 @@
   function mkV() { return Array.from({length: gw.rows}, () => new Array(gw.cols).fill(0)); }
   function mkPolicy() { return Array.from({length: gw.rows}, () => new Array(gw.cols).fill(0)); }
 
-  function actionValue(r, c, a) {
-    const ts = gw.transitions(r, c, a);
-    let q = 0;
-    for (const t of ts) q += t.p * (t.reward + gw.gamma * V[t.r1][t.c1]);
-    return q;
-  }
-
-  function greedyPolicy() {
-    const p = mkPolicy();
-    for (let r=0; r<gw.rows; r++) for (let c=0; c<gw.cols; c++) {
-      if (gw.isWall(r,c) || gw.isTerminal(r,c)) { p[r][c] = -1; continue; }
-      let best = -Infinity, bestA = 0;
-      for (let a=0; a<4; a++) { const q = actionValue(r,c,a); if (q > best) { best = q; bestA = a; } }
-      p[r][c] = bestA;
-    }
-    return p;
-  }
+  function actionValue(r, c, a) { return dpActionValue(gw, V, r, c, a); }
+  function greedyPolicy() { return dpGreedyPolicy(gw, V); }
 
   function viStep() {
     let maxD = 0;
