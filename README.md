@@ -50,41 +50,7 @@ The browser pages import these directly (`dp.html`, `mdp.html`, `td.html`, `band
 node --test
 ```
 
-```
-✔ epsilon-greedy pulls the best arm a majority of the time
-✔ UCB pulls the best arm a majority of the time
-✔ epsilon-greedy beats greedy on average across many testbeds
-✔ average regret shrinks over time (sublinear cumulative regret)
-✔ UCB achieves lower average regret than greedy
-✔ value iteration converges and satisfies the Bellman optimality equation
-✔ value iteration recovers the analytic optimum on a deterministic corridor
-✔ policy iteration agrees with value iteration
-✔ feature bases return the expected dimensions
-✔ a single tile is active per tiling
-✔ linear update reduces error toward a constant target
-✔ RBF regression fits the target function well
-✔ fourier regression also drives MSE down
-✔ an untrained model has higher error than a trained one
-✔ a clear move yields the step reward and the intended neighbour
-✔ moving off the grid keeps the agent in place
-✔ walls block movement
-✔ the goal is terminal and pays the goal reward
-✔ slip spreads probability over intended + perpendicular moves and sums to 1
-✔ cliff: large penalty, teleport to start, not terminal
-✔ sampling respects the transition distribution
-✔ mulberry32 is deterministic for a fixed seed
-✔ different seeds produce different streams
-✔ RNG.random stays in [0,1) and RNG.int in [0,n)
-✔ RNG.normal has roughly zero mean and unit variance
-✔ argmax and softmax behave
-✔ Q-learning beats the random policy on the tiny gridworld
-✔ Q-learning approaches the DP-optimal policy at the start state
-✔ SARSA also improves over random
-✔ learning curve trends upward (later returns beat early returns)
-ℹ tests 30
-ℹ pass 30
-ℹ fail 0
-```
+30 tests, no npm dependencies, all deterministic under a seeded PRNG.
 
 ## Running the site
 
@@ -104,6 +70,16 @@ python -m http.server 8000
 - `js/gridworld.js` — re-exports the tested `Gridworld` model and adds the canvas drawing + click-to-edit helpers
 - `js/ui.js` — the `Loop` animation helper for the module pages
 - `js/<page>.js` — one rendering/controls file per demo
+
+## Coursework
+
+Hands-on RL projects I built for the course, each in its own repo:
+
+- [Ascent](https://andreaisabelmontana.github.io/ascent/) — tabular Q-Learning / SARSA on MountainCar with a live training playground
+- [Mountain Car Control](https://andreaisabelmontana.github.io/mountain-car-control/) — the classic underpowered-car valley-escape problem
+- [Mesh Parking RL](https://andreaisabelmontana.github.io/mesh-parking-rl/) — an agent that learns to park on a mesh-discretised lot
+- [Swipe RL](https://andreaisabelmontana.github.io/swipe-rl/) — preference-based RL from like/dislike swipes, the human-in-the-loop core of RLHF
+- [RL Control Lab](https://andreaisabelmontana.github.io/rl-control-lab/) — classic control algorithms, tabular Q-learning to policy gradients
 
 ## License
 
